@@ -1,5 +1,6 @@
 package vleon.app.bitunion;
 
+import java.io.InputStream;
 import java.lang.ref.SoftReference;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -133,6 +134,7 @@ public class PostActivity extends Activity {
 
 	class FetchPostsTask extends AsyncTask<Void, Void, Result> {
 		ArrayList<BuPost> posts = new ArrayList<BuPost>();
+
 		@Override
 		protected void onPreExecute() {
 			// pBar.setVisibility(View.VISIBLE);
@@ -178,36 +180,6 @@ public class PostActivity extends Activity {
 						.show();
 				break;
 			}
-//			
-//			switch (MainActivity.api.getError()) {
-//			case BuAPI.SESSIONERROR:
-//				if (MainActivity.api.apiLogin() == Result.SUCCESS) {
-//					Toast.makeText(PostActivity.this, "重新获取SESSION成功",
-//							Toast.LENGTH_SHORT).show();
-//					fetchPosts();
-//				}
-//				break;
-//			case BuAPI.NONE:
-//				if (posts != null) {
-//					data.clear();
-//					for (int i = 0; i < posts.size(); i++) {
-//						data.add((BuPost) posts.get(i));
-//					}
-//					// rearrange();
-//					adapter.notifyDataSetChanged();
-//					// 自动滚动到顶端显示
-//					mListView.setSelection(0);
-//				}
-//				break;
-//			case BuAPI.NETERROR:
-//				Toast.makeText(PostActivity.this, "网络错误", Toast.LENGTH_SHORT)
-//						.show();
-//				break;
-//			default:
-//				Toast.makeText(PostActivity.this, "未知错误", Toast.LENGTH_SHORT)
-//						.show();
-//				break;
-//			}
 		}
 	}
 
@@ -389,15 +361,24 @@ public class PostActivity extends Activity {
 
 		@Override
 		protected Drawable doInBackground(String... params) {
-
-			Drawable drawable = Drawable
-					.createFromStream(
-							MainActivity.api.getImageStream(mImageDownloadData
-									.getImageSource()), "src");
+			Drawable drawable;
+			InputStream stream = MainActivity.api
+					.getImageStream(mImageDownloadData.getImageSource());
+			if (stream != null) {
+				drawable = Drawable.createFromStream(stream, "src");
+				// 如果图片为不能访问的外部图片，此时返回的drawable为null
+				if(drawable==null){
+					drawable = getResources().getDrawable(
+							R.drawable.content_picture);
+				}
+			} else {
+				drawable = getResources().getDrawable(
+						R.drawable.content_picture);
+			}
+			int width = drawable.getIntrinsicWidth();
 			drawable.setBounds(0, 0, 0 + drawable.getIntrinsicWidth(),
 					0 + drawable.getIntrinsicHeight());
 			return drawable;
-
 		}
 
 		@Override
