@@ -27,18 +27,18 @@ public class BuPost {
 	public String lastedit;
 
 	public BuPost(JSONObject obj) {
-		String message = BitunionAPI.getString(obj, "message");
+		String message = BuAPI.getString(obj, "message");
 		parseMessage(message);
 		// "attachimg":1,"attachment":"attachments%2Fforumid_14%2FX%2Fo%2FXoEp_MjAxMjA3MDk%3D.jpg"
-		if (BitunionAPI.getInt(obj, "attachimg") == 1) {
+		if (BuAPI.getInt(obj, "attachimg") == 1) {
 			attachmentImg = Constants.ROOT_URL
-					+ BitunionAPI.getString(obj, "attachment");
+					+ BuAPI.getString(obj, "attachment");
 			content = content + "<br/><img src='" + attachmentImg + "'>";
 		}
-		aid = BitunionAPI.getString(obj, "aid");
-		subject = BitunionAPI.getString(obj, "subject");
-		author = BitunionAPI.getString(obj, "author");
-		lastedit = BitunionAPI.getTimeStr(obj, "lastedit", "yyyy-MM-dd HH:mm");
+		aid = BuAPI.getString(obj, "aid");
+		subject = BuAPI.getString(obj, "subject");
+		author = BuAPI.getString(obj, "author");
+		lastedit = BuAPI.getTimeStr(obj, "lastedit", "yyyy-MM-dd HH:mm");
 	}
 
 	public void parseMessage(String message) {

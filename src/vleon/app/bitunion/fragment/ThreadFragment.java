@@ -5,8 +5,8 @@ import java.util.ArrayList;
 import vleon.app.bitunion.MainActivity;
 import vleon.app.bitunion.PostActivity;
 import vleon.app.bitunion.R;
-import vleon.app.bitunion.api.BitunionAPI;
-import vleon.app.bitunion.api.BitunionAPI.LoginResult;
+import vleon.app.bitunion.api.BuAPI;
+import vleon.app.bitunion.api.BuAPI.Result;
 import vleon.app.bitunion.api.BuThread;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -53,7 +53,7 @@ public class ThreadFragment extends SherlockListFragment {
 		Bundle args = new Bundle();
 		args.putInt("fid", fid);
 		fragment.setArguments(args);
-		
+
 		return fragment;
 	}
 
@@ -61,7 +61,7 @@ public class ThreadFragment extends SherlockListFragment {
 	public void onSaveInstanceState(Bundle outState) {
 		// TODO Auto-generated method stub
 		super.onSaveInstanceState(outState);
-		
+
 	}
 
 	@Override
@@ -140,7 +140,8 @@ public class ThreadFragment extends SherlockListFragment {
 				if (mActionMode != null) {
 					return true;
 				}
-				mActionMode = getSherlockActivity().startActionMode(mActionCallback);
+				mActionMode = getSherlockActivity().startActionMode(
+						mActionCallback);
 				return true;
 			}
 		});
@@ -162,9 +163,10 @@ public class ThreadFragment extends SherlockListFragment {
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
 		case R.id.menu_post:
-			final View view = LayoutInflater.from(getSherlockActivity()).inflate(
-					R.layout.newthread_dialog, null);
-			new AlertDialog.Builder(getSherlockActivity()).setView(view).setTitle("发表新帖")
+			final View view = LayoutInflater.from(getSherlockActivity())
+					.inflate(R.layout.newthread_dialog, null);
+			new AlertDialog.Builder(getSherlockActivity()).setView(view)
+					.setTitle("发表新帖")
 					.setNegativeButton("取消", new OnClickListener() {
 
 						@Override
@@ -175,12 +177,14 @@ public class ThreadFragment extends SherlockListFragment {
 
 						@Override
 						public void onClick(DialogInterface dialog, int which) {
-							MainActivity.api.postThread(getArguments()
-									.getInt("fid"), ((EditText) view
-									.findViewById(R.id.newSubjectText))
-									.getText().toString(), ((EditText) view
-									.findViewById(R.id.newContentText))
-									.getText().toString());
+							MainActivity.api.postThread(
+									getArguments().getInt("fid"),
+									((EditText) view
+											.findViewById(R.id.newSubjectText))
+											.getText().toString(),
+									((EditText) view
+											.findViewById(R.id.newContentText))
+											.getText().toString());
 							fetch();
 						}
 					}).show();
@@ -213,53 +217,85 @@ public class ThreadFragment extends SherlockListFragment {
 		new FetchThreadsTask().execute();
 	}
 
-	public class FetchThreadsTask extends
-			AsyncTask<Void, Void, ArrayList<BuThread>> {
+	public class FetchThreadsTask extends AsyncTask<Void, Void, Result> {
+		ArrayList<BuThread> threads = new ArrayList<BuThread>();
 
 		@Override
 		protected void onPreExecute() {
 			// TODO Auto-generated method stub
 			super.onPreExecute();
 			progressBar.setVisibility(View.VISIBLE);
+			threads.clear();
 		}
 
 		@Override
-		protected ArrayList<BuThread> doInBackground(Void... params) {
+		protected Result doInBackground(Void... params) {
 			int fid = ThreadFragment.this.getArguments().getInt("fid");
-			ArrayList<BuThread> threads = MainActivity.api.getThreads(fid,
-					mFrom, mFrom + STEP);
-			return threads;
+			return MainActivity.api.getThreads(threads, fid, mFrom, mFrom
+					+ STEP);
 		}
 
 		@Override
-		protected void onPostExecute(ArrayList<BuThread> threads) {
+		protected void onPostExecute(Result result) {
 			progressBar.setVisibility(View.GONE);
-			switch (MainActivity.api.getError()) {
-			case BitunionAPI.SESSIONERROR:
-				if(MainActivity.api.apiLogin()==LoginResult.SUCCESS){
-					Toast.makeText(getActivity(), "重新获取SESSION成功", Toast.LENGTH_SHORT).show();
-					fetch();
+			switch (result) {
+			case SUCCESS:
+				mData.clear();
+				for (int i = 0; i < threads.size(); i++) {
+					mData.add(threads.get(i));
 				}
+				mAdapter.notifyDataSetChanged();
+				// 自动滚动到顶端显示
+				ThreadFragment.this.setSelection(0);
 				break;
-			case BitunionAPI.NONE:
-				if (threads != null) {
-					mData.clear();
-					for (int i = 0; i < threads.size(); i++) {
-						mData.add(threads.get(i));
-					}
-					// rearrange();
-					mAdapter.notifyDataSetChanged();
-					// 自动滚动到顶端显示
-					ThreadFragment.this.setSelection(0);
-				}
+			case SUCCESS_EMPTY:
+				Toast.makeText(getActivity(), "没有数据", Toast.LENGTH_SHORT)
+						.show();
 				break;
-			case BitunionAPI.NETERROR:
-				Toast.makeText(getActivity(), "网络错误", Toast.LENGTH_SHORT).show();
+			case FAILURE:
+				// 返回数据result字段为failure，刷新api，重新获取session，一般情况下第二次会获得正确数据
+				// 但如果有其他原因一直得不到数据，这个任务会一直进行，解决方法是设置重试次数
+				MainActivity.api.refresh();
+				fetch();
+				break;
+			case NETWRONG:
+				Toast.makeText(getActivity(), "网络错误", Toast.LENGTH_SHORT)
+						.show();
 				break;
 			default:
-				Toast.makeText(getActivity(), "未知错误", Toast.LENGTH_SHORT).show();
+				Toast.makeText(getActivity(), "未知错误", Toast.LENGTH_SHORT)
+						.show();
 				break;
 			}
+			// switch (MainActivity.api.getError()) {
+			// case BuAPI.SESSIONERROR:
+			// if (MainActivity.api.apiLogin() == Result.SUCCESS) {
+			// Toast.makeText(getActivity(), "重新获取SESSION成功",
+			// Toast.LENGTH_SHORT).show();
+			// fetch();
+			// }
+			// break;
+			// case BuAPI.NONE:
+			// if (threads != null) {
+			// mData.clear();
+			// for (int i = 0; i < threads.size(); i++) {
+			// mData.add(threads.get(i));
+			// }
+			// // rearrange();
+			// mAdapter.notifyDataSetChanged();
+			// // 自动滚动到顶端显示
+			// ThreadFragment.this.setSelection(0);
+			// }
+			// break;
+			// case BuAPI.NETERROR:
+			// Toast.makeText(getActivity(), "网络错误", Toast.LENGTH_SHORT)
+			// .show();
+			// break;
+			// default:
+			// Toast.makeText(getActivity(), "未知错误", Toast.LENGTH_SHORT)
+			// .show();
+			// break;
+			// }
 		}
 	}
 

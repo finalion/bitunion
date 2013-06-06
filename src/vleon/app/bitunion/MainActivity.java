@@ -2,18 +2,18 @@ package vleon.app.bitunion;
 
 import java.util.ArrayList;
 
-import vleon.app.bitunion.api.BitunionAPI;
-import vleon.app.bitunion.api.BitunionAPI.LoginResult;
+import vleon.app.bitunion.api.BuAPI;
+import vleon.app.bitunion.api.BuAPI.Result;
 import vleon.app.bitunion.api.BuForum;
 import vleon.app.bitunion.fragment.MenuFragment;
 import vleon.app.bitunion.fragment.MenuFragment.OnForumSelectedListener;
 import vleon.app.bitunion.fragment.ThreadFragment;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
+import android.widget.Toast;
 
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
@@ -26,52 +26,17 @@ public class MainActivity extends SlidingFragmentActivity implements
 	ArrayList<BuForum> mForumList = new ArrayList<BuForum>();
 	ArrayList<ThreadFragment> mFragmentList = new ArrayList<ThreadFragment>();
 	ThreadFragment mCurrentFragment = null;
-	int mNetType = 0;
+
 	private int mStartFid = 14;
-	public static BitunionAPI api;
-	boolean mAutoLogin = false;
+	public static BuAPI api;
+
 	String mUsername, mPassword;
+	boolean mAutoLogin;
+	int mNetType;
 
 	final int LOGIN_REQUEST_CODE = 11111;
 
-	@Override
-	public void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_main);
-		init();
-		readConfig();
-		if (mAutoLogin) {
-			api = new BitunionAPI(mUsername, mPassword);
-			api.switchToNet(mNetType);
-			new LoginTask().execute();
-		} else {
-			startActivityForResult(new Intent(MainActivity.this,
-					LoginActivity.class), LOGIN_REQUEST_CODE);
-		}
-
-	}
-
-	@Override
-	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-		// TODO Auto-generated method stub
-		super.onActivityResult(requestCode, resultCode, data);
-		if (requestCode == LOGIN_REQUEST_CODE && resultCode == RESULT_OK) {
-			// Bundle tents = data.getExtras();
-			mAutoLogin = data.getBooleanExtra("autologin", true);
-			mUsername = data.getStringExtra("username");
-			mPassword = data.getStringExtra("password");
-			mNetType = data.getIntExtra("nettype", BitunionAPI.INNET);
-			new LoginTask().execute();
-		}
-	}
-
-	@Override
-	protected void onPause() {
-		super.onPause();
-		saveConfig();
-	}
-
-	public void init() {
+	public void setSideMenu() {
 		// set the Behind View
 		setBehindContentView(R.layout.menu_frame);
 		getSupportFragmentManager().beginTransaction()
@@ -84,14 +49,48 @@ public class MainActivity extends SlidingFragmentActivity implements
 		sm.setBehindOffsetRes(R.dimen.slidingmenu_offset);
 		sm.setFadeDegree(0.35f);
 		sm.setTouchModeAbove(SlidingMenu.TOUCHMODE_FULLSCREEN);
-		sm.setBehindWidth(400);
+		sm.setBehindWidth(280);
 		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 		setSlidingActionBarEnabled(true);
-
 		// sm.setMode(SlidingMenu.LEFT_RIGHT);
 		// sm.setSecondaryMenu(R.layout.menu_frame_right);
 		// getSupportFragmentManager().beginTransaction()
 		// .replace(R.id.menu_frame_right, new RightMenuFragment()).commit();
+	}
+
+	@Override
+	public void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.activity_main);
+		setSideMenu();
+		Intent intent = getIntent();
+		mUsername = intent.getStringExtra("username");
+		mPassword = intent.getStringExtra("password");
+		mNetType = intent.getIntExtra("nettype", BuAPI.BITNET);
+		mAutoLogin = intent.getBooleanExtra("autologin", true);
+		api = new BuAPI(mUsername, mPassword, mNetType);
+		api.switchToNet(mNetType);
+		new LoginTask().execute();
+	}
+
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		// TODO Auto-generated method stub
+		super.onActivityResult(requestCode, resultCode, data);
+		if (requestCode == LOGIN_REQUEST_CODE && resultCode == RESULT_OK) {
+			// Bundle tents = data.getExtras();
+			mAutoLogin = data.getBooleanExtra("autologin", true);
+			mUsername = data.getStringExtra("username");
+			mPassword = data.getStringExtra("password");
+			mNetType = data.getIntExtra("nettype", BuAPI.BITNET);
+			new LoginTask().execute();
+		}
+	}
+
+	@Override
+	protected void onPause() {
+		super.onPause();
+		// saveConfig();
 	}
 
 	public void showForum(int fid, String tag) {
@@ -120,16 +119,16 @@ public class MainActivity extends SlidingFragmentActivity implements
 			toggle();
 			return true;
 		case R.id.menu_switchnet:
-			if (mNetType == BitunionAPI.INNET) {
-				api.switchToNet(BitunionAPI.OUTNET);
-				mNetType = BitunionAPI.OUTNET;
-			} else if (mNetType == BitunionAPI.OUTNET) {
-				api.switchToNet(BitunionAPI.INNET);
-				mNetType = BitunionAPI.INNET;
+			if (mNetType == BuAPI.BITNET) {
+				api.switchToNet(BuAPI.OUTNET);
+				mNetType = BuAPI.OUTNET;
+			} else if (mNetType == BuAPI.OUTNET) {
+				api.switchToNet(BuAPI.BITNET);
+				mNetType = BuAPI.BITNET;
 			}
 			break;
 		case R.id.menu_logout:
-			api.apiLogout();
+			api.logout();
 			startActivityForResult(new Intent(MainActivity.this,
 					LoginActivity.class), LOGIN_REQUEST_CODE);
 			break;
@@ -140,9 +139,9 @@ public class MainActivity extends SlidingFragmentActivity implements
 	@Override
 	public boolean onPrepareOptionsMenu(Menu menu) {
 		MenuItem switchItem = menu.findItem(R.id.menu_switchnet);
-		if (mNetType == BitunionAPI.INNET) {
+		if (mNetType == BuAPI.BITNET) {
 			switchItem.setTitle("切换网络至外网");
-		} else if (mNetType == BitunionAPI.OUTNET) {
+		} else if (mNetType == BuAPI.OUTNET) {
 			switchItem.setTitle("切换网络至内网");
 		}
 		return true;
@@ -155,18 +154,19 @@ public class MainActivity extends SlidingFragmentActivity implements
 		return true;
 	}
 
-	class LoginTask extends AsyncTask<Void, Void, LoginResult> {
+	class LoginTask extends AsyncTask<Void, Void, Result> {
 
 		@Override
-		protected LoginResult doInBackground(Void... params) {
-			return api.apiLogin();
+		protected Result doInBackground(Void... params) {
+			return api.login();
 		}
 
 		@Override
-		protected void onPostExecute(LoginResult result) {
+		protected void onPostExecute(Result result) {
 			switch (result) {
 			case SUCCESS:
 			case SESSIONLOGIN:
+				showForum(mStartFid, "灌水乐园");
 				break;
 			case FAILURE:
 				break;
@@ -177,12 +177,9 @@ public class MainActivity extends SlidingFragmentActivity implements
 			default:
 				break;
 			}
-			// Toast.makeText(MainActivity.this,
-			// "Login Result: " + result.toString(), Toast.LENGTH_SHORT)
-			// .show();
-
-			// 显示默认论坛版块
-			showForum(mStartFid, "灌水乐园");
+			Toast.makeText(MainActivity.this,
+					"登录结果: " + result.toString(), Toast.LENGTH_SHORT)
+					.show();	
 		}
 	}
 
@@ -192,25 +189,4 @@ public class MainActivity extends SlidingFragmentActivity implements
 		showForum(fid, name);
 	}
 
-	/*
-	 * 读取和保存用户配�?
-	 */
-	public void saveConfig() {
-		SharedPreferences config = getSharedPreferences("config", MODE_PRIVATE);
-		SharedPreferences.Editor editor = config.edit();
-		editor.putInt("nettype", mNetType);
-		editor.putString("username", mUsername);
-		editor.putString("password", mPassword);
-		editor.putBoolean("autologin", mAutoLogin);
-		editor.commit();
-	}
-
-	public void readConfig() {
-		SharedPreferences config = getSharedPreferences("config", MODE_PRIVATE);
-		mNetType = config.getInt("nettype", BitunionAPI.INNET);
-		mStartFid = config.getInt("startfid", 14);
-		mUsername = config.getString("username", null);
-		mPassword = config.getString("password", null);
-		mAutoLogin = config.getBoolean("autologin", false);
-	}
 }

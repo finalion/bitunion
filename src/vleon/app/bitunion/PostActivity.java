@@ -4,9 +4,10 @@ import java.lang.ref.SoftReference;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import vleon.app.bitunion.api.BitunionAPI;
-import vleon.app.bitunion.api.BitunionAPI.LoginResult;
+import vleon.app.bitunion.api.BuAPI;
+import vleon.app.bitunion.api.BuAPI.Result;
 import vleon.app.bitunion.api.BuPost;
+import vleon.app.bitunion.fragment.ThreadFragment;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -130,44 +131,45 @@ public class PostActivity extends Activity {
 		new FetchPostsTask().execute();
 	}
 
-	class FetchPostsTask extends AsyncTask<Void, Void, ArrayList<BuPost>> {
-
+	class FetchPostsTask extends AsyncTask<Void, Void, Result> {
+		ArrayList<BuPost> posts = new ArrayList<BuPost>();
 		@Override
 		protected void onPreExecute() {
 			// pBar.setVisibility(View.VISIBLE);
 			super.onPreExecute();
+			posts.clear();
 		}
 
 		@Override
-		protected ArrayList<BuPost> doInBackground(Void... params) {
-			ArrayList<BuPost> posts = MainActivity.api.getPosts(mTid, mFrom,
-					mFrom + STEP);
-			return posts;
+		protected Result doInBackground(Void... params) {
+			return MainActivity.api.getPosts(posts, mTid, mFrom, mFrom + STEP);
 		}
 
 		@Override
-		protected void onPostExecute(ArrayList<BuPost> posts) {
-			switch (MainActivity.api.getError()) {
-			case BitunionAPI.SESSIONERROR:
-				if (MainActivity.api.apiLogin() == LoginResult.SUCCESS) {
-					Toast.makeText(PostActivity.this, "重新获取SESSION成功",
-							Toast.LENGTH_SHORT).show();
-					fetchPosts();
+		protected void onPostExecute(Result result) {
+			switch (result) {
+			case SUCCESS:
+				data.clear();
+				for (int i = 0; i < posts.size(); i++) {
+					data.add(posts.get(i));
 				}
+				adapter.notifyDataSetChanged();
+				// 自动滚动到顶端显示
+				mListView.setSelection(0);
 				break;
-			case BitunionAPI.NONE:
-				if (posts != null) {
-					data.clear();
-					for (int i = 0; i < posts.size(); i++) {
-						data.add((BuPost) posts.get(i));
-					}
-					// rearrange();
-					adapter.notifyDataSetChanged();
-					// 自动滚动到顶端显示
-					mListView.setSelection(0);
-				}
+			case SUCCESS_EMPTY:
+				Toast.makeText(PostActivity.this, "没有数据", Toast.LENGTH_SHORT)
+						.show();
 				break;
-			case BitunionAPI.NETERROR:
+			case FAILURE:
+				// 返回数据result字段为failure，刷新api，重新获取session，一般情况下第二次会获得正确数据
+				// 但如果有其他原因一直得不到数据，这个任务会一直进行，解决方法是设置重试次数
+				MainActivity.api.refresh();
+				fetchPosts();
+				Toast.makeText(PostActivity.this, "重新获取SESSION成功",
+						Toast.LENGTH_SHORT).show();
+				break;
+			case NETWRONG:
 				Toast.makeText(PostActivity.this, "网络错误", Toast.LENGTH_SHORT)
 						.show();
 				break;
@@ -176,6 +178,36 @@ public class PostActivity extends Activity {
 						.show();
 				break;
 			}
+//			
+//			switch (MainActivity.api.getError()) {
+//			case BuAPI.SESSIONERROR:
+//				if (MainActivity.api.apiLogin() == Result.SUCCESS) {
+//					Toast.makeText(PostActivity.this, "重新获取SESSION成功",
+//							Toast.LENGTH_SHORT).show();
+//					fetchPosts();
+//				}
+//				break;
+//			case BuAPI.NONE:
+//				if (posts != null) {
+//					data.clear();
+//					for (int i = 0; i < posts.size(); i++) {
+//						data.add((BuPost) posts.get(i));
+//					}
+//					// rearrange();
+//					adapter.notifyDataSetChanged();
+//					// 自动滚动到顶端显示
+//					mListView.setSelection(0);
+//				}
+//				break;
+//			case BuAPI.NETERROR:
+//				Toast.makeText(PostActivity.this, "网络错误", Toast.LENGTH_SHORT)
+//						.show();
+//				break;
+//			default:
+//				Toast.makeText(PostActivity.this, "未知错误", Toast.LENGTH_SHORT)
+//						.show();
+//				break;
+//			}
 		}
 	}
 
@@ -282,7 +314,8 @@ public class PostActivity extends Activity {
 
 	class ImageGetterFirst implements Html.ImageGetter {
 
-		Drawable defaultDrawable = getResources().getDrawable(R.drawable.content_picture);
+		Drawable defaultDrawable = getResources().getDrawable(
+				R.drawable.content_picture);
 		private TextView mTextView;
 		private String mContent;
 
@@ -302,8 +335,9 @@ public class PostActivity extends Activity {
 				new GetImageTask(data).execute();
 				drawable = defaultDrawable;
 			}
-			if(drawable!=null)
-				drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
+			if (drawable != null)
+				drawable.setBounds(0, 0, drawable.getIntrinsicWidth(),
+						drawable.getIntrinsicHeight());
 			return drawable;
 		}
 

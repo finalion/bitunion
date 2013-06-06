@@ -17,13 +17,13 @@ public class BuThread {
 
 	public BuThread(JSONObject obj) {
 		topFlag = false;
-		subject = BitunionAPI.getString(obj, "subject");
-		tid = BitunionAPI.getString(obj, "tid");
-		author = BitunionAPI.getString(obj, "author");
-		dateline = BitunionAPI.getString(obj, "dateline");
-		lastpost = BitunionAPI.getTimeStr(obj, "lastpost", "yyyy-MM-dd HH:mm");
-		lastposter = BitunionAPI.getString(obj, "lastposter");
-		views = BitunionAPI.getString(obj, "views");
-		replies = BitunionAPI.getString(obj, "replies");
+		subject = BuAPI.getString(obj, "subject");
+		tid = BuAPI.getString(obj, "tid");
+		author = BuAPI.getString(obj, "author");
+		dateline = BuAPI.getString(obj, "dateline");
+		lastpost = BuAPI.getTimeStr(obj, "lastpost", "yyyy-MM-dd HH:mm");
+		lastposter = BuAPI.getString(obj, "lastposter");
+		views = BuAPI.getString(obj, "views");
+		replies = BuAPI.getString(obj, "replies");
 	}
 }

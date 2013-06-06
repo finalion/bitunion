@@ -7,23 +7,23 @@ public class BuProfile {
 	public BuProfile(JSONObject obj){
 		try {
 			obj = obj.getJSONObject("meminfo");
-			uid = BitunionAPI.getString(obj, "uid");
-			status = BitunionAPI.getString(obj, "status");
-			username = BitunionAPI.getString(obj, "username");
-			avatar = BitunionAPI.getString(obj, "avatar");
-			credit = BitunionAPI.getString(obj, "credit");
-			regdate = BitunionAPI.getTimeStr(obj, "regdate", "yyyy-MM-dd HH:mm:ss");
-			lastvisit = BitunionAPI.getTimeStr(obj, "lastvisit", "yyyy-MM-dd HH:mm:ss");
-			bday = BitunionAPI.getString(obj, "bday");
-			signature = BitunionAPI.getString(obj, "signature");
-			postnum = BitunionAPI.getString(obj, "postnum");
-			threadnum = BitunionAPI.getString(obj, "threadnum");
-			email = BitunionAPI.getString(obj, "email");
-			site = BitunionAPI.getString(obj, "site");
-			icq = BitunionAPI.getString(obj, "icq");
-			oicq = BitunionAPI.getString(obj, "oicq");
-			yahoo = BitunionAPI.getString(obj, "yahoo");
-			msn = BitunionAPI.getString(obj, "msn");
+			uid = BuAPI.getString(obj, "uid");
+			status = BuAPI.getString(obj, "status");
+			username = BuAPI.getString(obj, "username");
+			avatar = BuAPI.getString(obj, "avatar");
+			credit = BuAPI.getString(obj, "credit");
+			regdate = BuAPI.getTimeStr(obj, "regdate", "yyyy-MM-dd HH:mm:ss");
+			lastvisit = BuAPI.getTimeStr(obj, "lastvisit", "yyyy-MM-dd HH:mm:ss");
+			bday = BuAPI.getString(obj, "bday");
+			signature = BuAPI.getString(obj, "signature");
+			postnum = BuAPI.getString(obj, "postnum");
+			threadnum = BuAPI.getString(obj, "threadnum");
+			email = BuAPI.getString(obj, "email");
+			site = BuAPI.getString(obj, "site");
+			icq = BuAPI.getString(obj, "icq");
+			oicq = BuAPI.getString(obj, "oicq");
+			yahoo = BuAPI.getString(obj, "yahoo");
+			msn = BuAPI.getString(obj, "msn");
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
