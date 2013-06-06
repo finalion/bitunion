@@ -1,0 +1,17 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+    <item
+        android:id="@+id/menu_hide"
+        android:orderInCategory="1"
+        android:showAsAction="ifRoom"
+        android:title="隐藏"
+        android:icon="@drawable/content_discard">
+    </item>
+    <item
+        android:id="@+id/menu_top"
+        android:orderInCategory="0"
+        android:showAsAction="ifRoom"
+        android:title="置顶"
+        android:icon="@drawable/content_merge">
+    </item>
+
+</menu>

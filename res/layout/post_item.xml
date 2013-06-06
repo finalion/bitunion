@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="2dp" >
+
+    <!-- 帖子发表信息：作者，回复，时间 -->
+
+    <RelativeLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+         >
+
+        <TextView
+            android:id="@+id/authorText2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="2dip"
+            android:textColor="#003366"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/timeText2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+             android:layout_alignParentRight="true"
+            android:layout_marginRight="6dp"
+            android:textColor="#003366"
+            android:textSize="12sp" />
+
+<!--         <TextView
+            android:id="@+id/floorText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_marginRight="6dip"
+            android:textColor="#ff0000"
+            android:textSize="11dip" /> -->
+    </RelativeLayout>
+    <!-- 引用部分 -->
+
+    <RelativeLayout
+        android:id="@+id/quoteLayout"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="1dp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        android:layout_marginTop="1dp"
+        android:background="#D6E0EF"
+        android:padding="1dp"
+        android:visibility="gone" >
+
+        <!-- 为了有边框的效果，内嵌一个layout -->
+
+        <RelativeLayout
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:background="@color/odd_item"
+            android:paddingBottom="1dp"
+            android:paddingLeft="5dp"
+            android:paddingRight="5dp"
+            android:paddingTop="1dp" >
+
+            <TextView
+                android:id="@+id/quoteAuthorView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:textColor="#003366"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/quoteTimeView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="15dp"
+                android:layout_toRightOf="@id/quoteAuthorView"
+                android:textColor="#003366"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/quoteContentView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/quoteAuthorView"
+                android:textColor="#003366"
+                android:textSize="15sp" />
+        </RelativeLayout>
+    </RelativeLayout>
+
+    <!-- 帖子内容 -->
+
+    <TextView
+        android:id="@+id/messageView"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="3dp"
+        android:layout_marginRight="3dp"
+        android:layout_marginTop="2dp"
+        android:autoLink="web|email"
+        android:textColor="#003366"
+        android:textSize="17sp" />
+
+    <ImageView
+        android:id="@+id/attachmentView"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="3dp"
+        android:layout_marginRight="3dp"
+        android:layout_marginTop="3dp"
+        android:contentDescription="@string/attachment_img" />
+
+</LinearLayout>

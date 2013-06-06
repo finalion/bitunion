@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string-array name="forums">
+
+        <!-- 苦中作乐 -->
+        <item>游戏人生</item>
+        <item>影视天地</item>
+        <item>音乐殿堂</item>
+        <item>灌水乐园</item>
+        <item>生活会馆</item>
+        <item>贴图欣赏</item>
+        <item>动漫天空</item>
+        <item>体坛风云</item>
+        <item>职场生涯</item>
+
+        <!-- 直通理工 -->
+        <item>校园求助热线</item>
+        <item>叫卖场</item>
+        <item>前程似锦</item>
+        <item>外语园地</item>
+        <item>海外BITer</item>
+        <item>知识海报</item>
+        <!-- 技术讨论 -->
+        <item>网络技术</item>
+        <item>硬件数码</item>
+        <item>GNU/Linux</item>
+        <item>嵌入式开发</item>
+        <item>程序员集中营</item>
+        <item>软件使用</item>
+
+        <!-- 系统管理 -->
+        <item>联盟公告板</item>
+        <item>联盟意见箱</item>
+        <item>新手交流区</item>
+    </string-array>
+
+    <integer-array name="fids">
+
+        <!-- 苦中作乐 -->
+        <item>22</item>
+        <item>23</item>
+        <item>25</item>
+        <item>14</item>
+        <item>96</item>
+        <item>24</item>
+        <item>27</item>
+        <item>115</item>
+        <item>124</item>
+        <!-- 直通理工 -->
+        <item>108</item>
+        <item>59</item>
+        <item>83</item>
+        <item>89</item>
+        <item>150</item>
+        <item>151</item>
+        <!-- 技术讨论 -->
+        <item>10</item>
+        <item>80</item>
+        <item>84</item>
+        <item>101</item>
+        <item>32</item>
+        <item>21</item>
+
+        <!-- 系统管理 -->
+        <item>3</item>
+        <item>4</item>
+        <item>92</item>
+    </integer-array>
+    <integer-array name="types">
+
+        <!-- 苦中作乐 -->
+        <item>3</item>
+        <item>3</item>
+        <item>3</item>
+        <item>3</item>
+        <item>3</item>
+        <item>3</item>
+        <item>3</item>
+        <item>3</item>
+        <item>3</item>
+
+        <!-- 直通理工 -->
+        <item>1</item>
+        <item>1</item>
+        <item>1</item>
+        <item>1</item>
+        <item>1</item>
+        <item>1</item>
+        <!-- 技术讨论 -->
+        <item>2</item>
+        <item>2</item>
+        <item>2</item>
+        <item>2</item>
+        <item>2</item>
+        <item>2</item>
+
+        <!-- 系统管理 -->
+        <item>0</item>
+        <item>0</item>
+        <item>0</item>
+    </integer-array>
+
+</resources>

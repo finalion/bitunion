@@ -1,0 +1,32 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <item
+        android:id="@+id/menu_refresh"
+        android:icon="@drawable/navigation_refresh"
+        android:orderInCategory="3"
+        android:showAsAction="ifRoom"
+        android:title="刷新">
+    </item>
+    <item
+        android:id="@+id/menu_prev"
+        android:icon="@drawable/navigation_previous_item"
+        android:orderInCategory="1"
+        android:showAsAction="ifRoom"
+        android:title="上页">
+    </item>
+    <item
+        android:id="@+id/menu_next"
+        android:icon="@drawable/navigation_next_item"
+        android:orderInCategory="2"
+        android:showAsAction="ifRoom"
+        android:title="下页">
+    </item>
+    <item
+        android:id="@+id/menu_post"
+        android:orderInCategory="0"
+        android:title="发表"
+        android:icon="@drawable/content_new"
+        android:showAsAction="ifRoom">
+    </item>
+
+</menu>

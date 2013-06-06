@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">北理FTP联盟</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="menu_settings">设置</string>
+    <string name="topFlag">♦</string>
+<string name="attachment_img">图像附件</string>
+<string name="fill_title">标题</string>
+<string name="fill_content">内容</string>
+<string name="username_hint">请输入联盟ID</string>
+<string name="password_hint">请输入密码</string>
+</resources>

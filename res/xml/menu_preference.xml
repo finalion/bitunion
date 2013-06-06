@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <PreferenceCategory android:title="系统管理区" android:key="management">
+    </PreferenceCategory>
+    <PreferenceCategory android:title="直通理工区" android:key="directbit">
+        <ListPreference android:entries="@array/forums" android:entryValues="@array/fids" android:title="2"/>
+    </PreferenceCategory>
+    <PreferenceCategory android:title="苦中作乐区" android:key="painfun">
+        <EditTextPreference android:title="測試"/>
+    </PreferenceCategory>
+    <PreferenceCategory android:title="技术讨论区" android:key="technique">
+    </PreferenceCategory>
+
+</PreferenceScreen>

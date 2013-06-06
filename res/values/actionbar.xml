@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- the theme applied to the application or activity -->
+    <style name="CustomActivityTheme" parent="@android:style/Theme.Holo">
+        <item name="android:actionBarTabTextStyle">@style/CustomTabTextStyle</item>
+<!--         <item name="android:actionBarDivider">@drawable/ab_divider</item> -->
+<!--         <item name="android:actionBarItemBackground">@drawable/ab_item_background</item> -->
+    </style>
+
+    <!-- style for the action bar tab text -->
+    <style name="CustomTabTextStyle" parent="@android:style/TextAppearance.Holo">
+        <item name="android:textColor">#2456c2</item>
+    </style>
+</resources>
