@@ -20,9 +20,8 @@
         android:layout_below="@id/title_text"
         android:background="#ffffff"
         android:cacheColorHint="#ffffff"
-        android:divider="#33b5e5"
         android:dividerHeight="1dp"
-        android:padding="3dp" />
+        android:padding="6dp" />
 
     <ProgressBar
         android:id="@+id/progressBar2"

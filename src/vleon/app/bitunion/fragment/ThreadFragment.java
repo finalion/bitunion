@@ -3,24 +3,29 @@ package vleon.app.bitunion.fragment;
 import java.util.ArrayList;
 
 import vleon.app.bitunion.MainActivity;
+import vleon.app.bitunion.MainAdapter;
 import vleon.app.bitunion.PostActivity;
 import vleon.app.bitunion.R;
-import vleon.app.bitunion.api.BuAPI;
 import vleon.app.bitunion.api.BuAPI.Result;
 import vleon.app.bitunion.api.BuThread;
+import android.R.integer;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.StrictMode;
+import android.os.Handler;
+import android.os.Message;
 import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AbsListView.MultiChoiceModeListener;
 import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.BaseAdapter;
 import android.widget.EditText;
@@ -43,10 +48,18 @@ public class ThreadFragment extends SherlockListFragment {
 	ActionMode mActionMode;
 	int mActionItemPosition = -1;
 	ProgressBar progressBar = null;
-	// 不推荐！
-	StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
-			.permitAll().build();
 
+//	Handler handler = new Handler(){
+//
+//		@Override
+//		public void handleMessage(Message msg) {
+//			switch(msg.what){
+//			case 
+//			}
+//		}
+//		
+//	};
+	
 	public static ThreadFragment newInstance(int fid) {
 		ThreadFragment fragment = new ThreadFragment();
 		mFrom = 0;
@@ -68,8 +81,6 @@ public class ThreadFragment extends SherlockListFragment {
 	public void onCreate(Bundle savedInstanceState) {
 		// TODO Auto-generated method stub
 		super.onCreate(savedInstanceState);
-		// 不推荐！
-		StrictMode.setThreadPolicy(policy);
 		// 在fragment中使能选项菜单
 		setHasOptionsMenu(true);
 	}
@@ -86,48 +97,7 @@ public class ThreadFragment extends SherlockListFragment {
 		// TODO Auto-generated method stub
 		super.onActivityCreated(savedInstanceState);
 		progressBar = (ProgressBar) getView().findViewById(R.id.progressBar1);
-		final ActionMode.Callback mActionCallback = new ActionMode.Callback() {
 
-			@Override
-			public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
-
-				return false;
-			}
-
-			@Override
-			public void onDestroyActionMode(ActionMode mode) {
-				mActionMode = null;
-			}
-
-			@Override
-			public boolean onCreateActionMode(ActionMode mode, Menu menu) {
-				MenuInflater inflater = mode.getMenuInflater();
-				inflater.inflate(R.menu.thread_context_menu, menu);
-				return true;
-			}
-
-			@Override
-			public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
-				String string = (String) mode.getTitle();
-				switch (item.getItemId()) {
-				case R.id.menu_hide:
-					Toast.makeText(getActivity(),
-							"隐藏: " + mData.get(mActionItemPosition).subject,
-							Toast.LENGTH_SHORT).show();
-					break;
-				case R.id.menu_top:
-					Toast.makeText(
-							getActivity(),
-							"置顶: " + mData.get(mActionItemPosition).subject
-									+ string, Toast.LENGTH_SHORT).show();
-					break;
-				default:
-					break;
-				}
-				mActionMode.finish();
-				return true;
-			}
-		};
 		/*
 		 * 长按事件触发时，如果不反悔true，onListItemClick单击事件也会触发, 否则会一直分发事件直到触发单击
 		 */
@@ -138,10 +108,16 @@ public class ThreadFragment extends SherlockListFragment {
 					int arg2, long arg3) {
 				mActionItemPosition = arg2;
 				if (mActionMode != null) {
-					return true;
+					// if already in action mode - do nothing
+					return false;
 				}
+				mAdapter.beginSelected();
+				mAdapter.addSelects(arg2);
+				mAdapter.notifyDataSetChanged();
 				mActionMode = getSherlockActivity().startActionMode(
-						mActionCallback);
+						new ActionModeCallback());
+				mActionMode.invalidate();
+				mActionMode.setTitle("已选择" + mAdapter.getSelectedCnt() + "帖");
 				return true;
 			}
 		});
@@ -149,7 +125,51 @@ public class ThreadFragment extends SherlockListFragment {
 		mData = new ArrayList<BuThread>();
 		mAdapter = new ThreadsAdapter(getActivity(), mData);
 		setListAdapter(mAdapter);
-		fetch();
+		new FetchThreadsTask().execute();
+	}
+
+	class ActionModeCallback implements ActionMode.Callback {
+
+		@Override
+		public boolean onCreateActionMode(ActionMode mode, Menu menu) {
+			MenuInflater inflater = mode.getMenuInflater();
+			inflater.inflate(R.menu.thread_context_menu, menu);
+			return true;
+		}
+
+		@Override
+		public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		@Override
+		public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+			String string = (String) mode.getTitle();
+			switch (item.getItemId()) {
+			case R.id.menu_hide:
+				Toast.makeText(getActivity(),
+						"隐藏: " + mData.get(mActionItemPosition).subject,
+						Toast.LENGTH_SHORT).show();
+				mode.finish();
+				return true;
+			case R.id.menu_top:
+				Toast.makeText(
+						getActivity(),
+						"置顶: " + mData.get(mActionItemPosition).subject
+								+ string, Toast.LENGTH_SHORT).show();
+				return true;
+			default:
+				return false;
+			}
+		}
+
+		@Override
+		public void onDestroyActionMode(ActionMode mode) {
+			mActionMode = null;
+			mAdapter.endSelected();
+		}
+
 	}
 
 	@Override
@@ -177,19 +197,15 @@ public class ThreadFragment extends SherlockListFragment {
 
 						@Override
 						public void onClick(DialogInterface dialog, int which) {
-							MainActivity.api.postThread(
-									getArguments().getInt("fid"),
-									((EditText) view
-											.findViewById(R.id.newSubjectText))
-											.getText().toString(),
-									((EditText) view
-											.findViewById(R.id.newContentText))
-											.getText().toString());
-							fetch();
+							new NewThreadTask().execute(((EditText) view
+									.findViewById(R.id.newSubjectText))
+									.getText().toString(), ((EditText) view
+									.findViewById(R.id.newContentText))
+									.getText().toString());
 						}
 					}).show();
 		case R.id.menu_refresh:
-			fetch();
+			new FetchThreadsTask().execute();
 			break;
 		case R.id.menu_next:
 			fetchNextPage();
@@ -206,15 +222,75 @@ public class ThreadFragment extends SherlockListFragment {
 	public void onListItemClick(ListView l, View v, int position, long id) {
 		// TODO Auto-generated method stub
 		super.onListItemClick(l, v, position, id);
-		Intent intent = new Intent(getActivity(), PostActivity.class);
-		BuThread thread = mData.get(position);
-		intent.putExtra("id", thread.tid);
-		intent.putExtra("subject", thread.subject);
-		startActivity(intent);
-	}
+		if (mActionMode != null) {
+			mAdapter.toggleSelected(position);
+			mAdapter.notifyDataSetChanged();
+			mActionMode.setTitle("已选择" + mAdapter.getSelectedCnt() + "帖");
+			if(mAdapter.getSelectedCnt()==0){
+				mActionMode.finish();
+			}
+		} else {
+			Intent intent = new Intent(getActivity(), PostActivity.class);
+			BuThread thread = mData.get(position);
+			intent.putExtra("id", thread.tid);
+			intent.putExtra("subject", thread.subject);
+			startActivity(intent);
+		}
 
-	public void fetch() {
-		new FetchThreadsTask().execute();
+	}
+	
+
+
+//	Runnable runnable = new Runnable() {
+//		
+//		@Override
+//		public void run() {
+//			if(MainActivity.api.refresh()== Result.SUCCESS){
+//				handler.sendEmptyMessage(0);
+//			}
+//		}
+//	};
+
+	public class LoginTask extends AsyncTask<Void, Void, Result> {
+
+		@Override
+		protected Result doInBackground(Void... arg0) {
+			return MainActivity.api.refresh();
+		}
+
+		@Override
+		protected void onPostExecute(Result result) {
+			switch (result) {
+			case SUCCESS:
+				new FetchThreadsTask().execute();
+				break;
+			case SUCCESS_EMPTY:
+				break;
+			case FAILURE:
+				break;
+			case NETWRONG:
+				Toast.makeText(getSherlockActivity(), "网络错误", Toast.LENGTH_SHORT)
+						.show();
+				break;
+			default:
+				Toast.makeText(getSherlockActivity(), "未知错误", Toast.LENGTH_SHORT)
+						.show();
+				break;
+			}
+		}
+	}
+	
+	public class NewThreadTask extends AsyncTask<String, Void, Result> {
+
+		@Override
+		protected Result doInBackground(String... arg0) {
+			return MainActivity.api.postThread(getArguments().getInt("fid"),arg0[0],arg0[1]);
+		}
+
+		@Override
+		protected void onPostExecute(Result result) {
+			new FetchThreadsTask().execute();
+		}
 	}
 
 	public class FetchThreadsTask extends AsyncTask<Void, Void, Result> {
@@ -255,8 +331,8 @@ public class ThreadFragment extends SherlockListFragment {
 			case FAILURE:
 				// 返回数据result字段为failure，刷新api，重新获取session，一般情况下第二次会获得正确数据
 				// 但如果有其他原因一直得不到数据，这个任务会一直进行，解决方法是设置重试次数
-				MainActivity.api.refresh();
-				fetch();
+				new LoginTask().execute();
+				new FetchThreadsTask().execute();
 				break;
 			case NETWRONG:
 				Toast.makeText(getActivity(), "网络错误", Toast.LENGTH_SHORT)
@@ -267,57 +343,27 @@ public class ThreadFragment extends SherlockListFragment {
 						.show();
 				break;
 			}
-			// switch (MainActivity.api.getError()) {
-			// case BuAPI.SESSIONERROR:
-			// if (MainActivity.api.apiLogin() == Result.SUCCESS) {
-			// Toast.makeText(getActivity(), "重新获取SESSION成功",
-			// Toast.LENGTH_SHORT).show();
-			// fetch();
-			// }
-			// break;
-			// case BuAPI.NONE:
-			// if (threads != null) {
-			// mData.clear();
-			// for (int i = 0; i < threads.size(); i++) {
-			// mData.add(threads.get(i));
-			// }
-			// // rearrange();
-			// mAdapter.notifyDataSetChanged();
-			// // 自动滚动到顶端显示
-			// ThreadFragment.this.setSelection(0);
-			// }
-			// break;
-			// case BuAPI.NETERROR:
-			// Toast.makeText(getActivity(), "网络错误", Toast.LENGTH_SHORT)
-			// .show();
-			// break;
-			// default:
-			// Toast.makeText(getActivity(), "未知错误", Toast.LENGTH_SHORT)
-			// .show();
-			// break;
-			// }
 		}
 	}
 
-	class ThreadsAdapter extends BaseAdapter {
-		Context context;
-		ArrayList<BuThread> data;
+	class ThreadsAdapter extends MainAdapter {
+		ArrayList<BuThread> threads;
 
-		public ThreadsAdapter(Context context, ArrayList<BuThread> data) {
-			this.context = context;
-			this.data = data;
+		public ThreadsAdapter(Context context, ArrayList<BuThread> threads) {
+			super(context);
+			this.threads = threads;
 		}
 
 		@Override
 		public int getCount() {
 			// TODO Auto-generated method stub
-			return data.size();
+			return threads.size();
 		}
 
 		@Override
 		public Object getItem(int position) {
 			// TODO Auto-generated method stub
-			return data.get(position);
+			return threads.get(position);
 		}
 
 		@Override
@@ -337,7 +383,7 @@ public class ThreadFragment extends SherlockListFragment {
 			// @SuppressWarnings("unchecked")
 			BuThread item = (BuThread) getItem(position);
 			if (convertView == null) {
-				convertView = LayoutInflater.from(context).inflate(
+				convertView = LayoutInflater.from(mContext).inflate(
 						R.layout.thread_item, null);
 				holder = new ViewHolder();
 				holder.flagView = (TextView) convertView
@@ -368,20 +414,27 @@ public class ThreadFragment extends SherlockListFragment {
 			// } else {
 			// convertView.setBackgroundResource(R.drawable.even_item);
 			// }
+			if (mSelected
+					&& mSelectedIndexs.contains(Integer.valueOf(position))) {
+				convertView.setBackgroundColor(getResources().getColor(
+						R.color.item_selected));
+			} else {
+				convertView.setBackgroundResource(R.drawable.even_item);
+			}
 			return convertView;
 		}
 	}
 
 	public void fetchNextPage() {
 		mFrom += STEP;
-		fetch();
+		new FetchThreadsTask().execute();
 	}
 
 	public void fetchPrevPage() {
 		mFrom -= STEP;
 		if (mFrom <= 0)
 			mFrom = 0;
-		fetch();
+		new FetchThreadsTask().execute();
 	}
 
 }

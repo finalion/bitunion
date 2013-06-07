@@ -292,7 +292,6 @@ public class BuAPI {
 		} catch (JSONException e1) {
 			e1.printStackTrace();
 		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return post2(NEWPOST, jsonObj);

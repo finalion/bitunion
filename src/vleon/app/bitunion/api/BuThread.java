@@ -20,6 +20,7 @@ public class BuThread {
 		subject = BuAPI.getString(obj, "subject");
 		tid = BuAPI.getString(obj, "tid");
 		author = BuAPI.getString(obj, "author");
+		authorid = BuAPI.getString(obj, "authorid");
 		dateline = BuAPI.getString(obj, "dateline");
 		lastpost = BuAPI.getTimeStr(obj, "lastpost", "yyyy-MM-dd HH:mm");
 		lastposter = BuAPI.getString(obj, "lastposter");

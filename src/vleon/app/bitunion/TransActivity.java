@@ -21,17 +21,17 @@ public class TransActivity extends SherlockActivity {
 		readConfig();
 		// 读取保存的用户信息成功，用户并且设置了自动登录，跳转到主界面
 		// 否则跳转到登录界面
-		Toast.makeText(this, "过渡界面", Toast.LENGTH_SHORT).show();
+//		Toast.makeText(this, "过渡界面", Toast.LENGTH_SHORT).show();
 		Intent intent = new Intent();
 		intent.putExtra("username", mUsername);
 		intent.putExtra("password", mPassword);
 		intent.putExtra("nettype", mNetType);
 		intent.putExtra("autologin", mAutoLogin);
 		if (mUsername != null && mPassword != null && mAutoLogin) {
-			Toast.makeText(this, "跳转到主界面", Toast.LENGTH_SHORT).show();
+//			Toast.makeText(this, "跳转到主界面", Toast.LENGTH_SHORT).show();
 			intent.setClass(this, MainActivity.class);
 		} else {
-			Toast.makeText(this, "跳转到登录界面", Toast.LENGTH_SHORT).show();
+//			Toast.makeText(this, "跳转到登录界面", Toast.LENGTH_SHORT).show();
 			intent.setClass(this, LoginActivity.class);
 		}
 		startActivity(intent);

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="odd_item">#FFFFFF</color>
-    <color name="even_item">#F8F8F8</color>
+    <color name="even_item">#FFFFFF</color>
 <!--     <color name="item_selected">#698cc3</color> -->
-    <color name="item_selected">#33b5e5</color>
-   
+    <color name="item_selected">#ff7cc9e5</color>
+   <color name="item_test">#888888</color>
 </resources>
