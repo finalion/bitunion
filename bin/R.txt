@@ -127,10 +127,12 @@ int color abs__bright_foreground_holo_light 0x7f070003
 int color abs__bright_foreground_inverse_holo_dark 0x7f070006
 int color abs__bright_foreground_inverse_holo_light 0x7f070007
 int color abs__holo_blue_light 0x7f070008
-int color abs__primary_text_disable_only_holo_dark 0x7f07000d
-int color abs__primary_text_disable_only_holo_light 0x7f07000e
-int color abs__primary_text_holo_dark 0x7f07000f
-int color abs__primary_text_holo_light 0x7f070010
+int color abs__primary_text_disable_only_holo_dark 0x7f07000f
+int color abs__primary_text_disable_only_holo_light 0x7f070010
+int color abs__primary_text_holo_dark 0x7f070011
+int color abs__primary_text_holo_light 0x7f070012
+int color background 0x7f07000e
+int color basic 0x7f07000d
 int color even_item 0x7f07000a
 int color item_selected 0x7f07000b
 int color item_test 0x7f07000c

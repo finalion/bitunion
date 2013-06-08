@@ -69,7 +69,6 @@ public class MainActivity extends SlidingFragmentActivity implements
 		mNetType = intent.getIntExtra("nettype", BuAPI.BITNET);
 		mAutoLogin = intent.getBooleanExtra("autologin", true);
 		api = new BuAPI(mUsername, mPassword, mNetType);
-		api.switchToNet(mNetType);
 		new LoginTask().execute();
 	}
 
@@ -119,12 +118,10 @@ public class MainActivity extends SlidingFragmentActivity implements
 			toggle();
 			return true;
 		case R.id.menu_switchnet:
-			if (mNetType == BuAPI.BITNET) {
-				api.switchToNet(BuAPI.OUTNET);
-				mNetType = BuAPI.OUTNET;
-			} else if (mNetType == BuAPI.OUTNET) {
-				api.switchToNet(BuAPI.BITNET);
-				mNetType = BuAPI.BITNET;
+			if (api.getNetType() == BuAPI.BITNET) {
+				api.setNetType(BuAPI.OUTNET);
+			} else if (api.getNetType() == BuAPI.OUTNET) {
+				api.setNetType(BuAPI.BITNET);
 			}
 			break;
 		case R.id.menu_logout:
@@ -139,9 +136,9 @@ public class MainActivity extends SlidingFragmentActivity implements
 	@Override
 	public boolean onPrepareOptionsMenu(Menu menu) {
 		MenuItem switchItem = menu.findItem(R.id.menu_switchnet);
-		if (mNetType == BuAPI.BITNET) {
+		if (api.getNetType() == BuAPI.BITNET) {
 			switchItem.setTitle("切换网络至外网");
-		} else if (mNetType == BuAPI.OUTNET) {
+		} else if (api.getNetType() == BuAPI.OUTNET) {
 			switchItem.setTitle("切换网络至内网");
 		}
 		return true;

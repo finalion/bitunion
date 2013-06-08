@@ -162,17 +162,17 @@ public final class R {
 	}
 	public static final class color {
 		public static final int abs__bright_foreground_inverse_holo_light = 0x7f070007;
-		public static final int abs__primary_text_disable_only_holo_light = 0x7f07000e;
+		public static final int abs__primary_text_disable_only_holo_light = 0x7f070010;
 		public static final int abs__holo_blue_light = 0x7f070008;
 		public static final int abs__bright_foreground_holo_dark = 0x7f070002;
 		public static final int abs__bright_foreground_holo_light = 0x7f070003;
-		public static final int abs__primary_text_holo_dark = 0x7f07000f;
-		public static final int abs__primary_text_disable_only_holo_dark = 0x7f07000d;
+		public static final int abs__primary_text_holo_dark = 0x7f070011;
+		public static final int abs__primary_text_disable_only_holo_dark = 0x7f07000f;
 		public static final int abs__bright_foreground_disabled_holo_dark = 0x7f070004;
 		public static final int abs__background_holo_light = 0x7f070001;
 		public static final int abs__bright_foreground_disabled_holo_light = 0x7f070005;
 		public static final int abs__bright_foreground_inverse_holo_dark = 0x7f070006;
-		public static final int abs__primary_text_holo_light = 0x7f070010;
+		public static final int abs__primary_text_holo_light = 0x7f070012;
 		public static final int abs__background_holo_dark = 0x7f070000;
 	}
 	public static final class string {

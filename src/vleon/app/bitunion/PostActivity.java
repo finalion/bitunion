@@ -41,8 +41,8 @@ import com.actionbarsherlock.view.MenuItem;
 public class PostActivity extends SherlockActivity {
 	private String mTid;
 	private String mSubject;
-	ArrayList<BuPost> data = new ArrayList<BuPost>();
-	ListAdapter adapter = null;
+	ArrayList<BuPost> mData = new ArrayList<BuPost>();
+	ListAdapter mAdapter = null;
 	ListView mListView;
 	TextView mTitleView;
 	int mFrom;
@@ -60,8 +60,8 @@ public class PostActivity extends SherlockActivity {
 		mListView = (ListView) findViewById(R.id.post_list);
 		mTitleView = (TextView) findViewById(R.id.title_text);
 		mTitleView.setText(Html.fromHtml(mSubject));
-		adapter = new ListAdapter(this, data);
-		mListView.setAdapter(adapter);
+		mAdapter = new ListAdapter(this, mData);
+		mListView.setAdapter(mAdapter);
 		mFrom = 0;
 		mDrawableCache = new HashMap<String, SoftReference<Drawable>>();
 		fetchPosts();
@@ -75,13 +75,13 @@ public class PostActivity extends SherlockActivity {
 					// if already in action mode - do nothing
 					return false;
 				}
-				adapter.beginSelected();
-				adapter.addSelects(arg2);
-				adapter.notifyDataSetChanged();
+				mAdapter.beginSelected();
+				mAdapter.addSelects(arg2);
+				mAdapter.notifyDataSetChanged();
 				mActionMode = PostActivity.this
 						.startActionMode(new ActionModeCallback());
 				mActionMode.invalidate();
-				mActionMode.setTitle("已引用" + adapter.getSelectedCnt() + "个回复");
+				mActionMode.setTitle("已引用" + mAdapter.getSelectedCnt() + "个回复");
 				return true;
 			}
 		});
@@ -91,13 +91,14 @@ public class PostActivity extends SherlockActivity {
 			public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
 					long arg3) {
 				if (mActionMode != null) {
-					adapter.toggleSelected(arg2);
-					adapter.notifyDataSetChanged();
-					mActionMode.setTitle("已引用" + adapter.getSelectedCnt() + "个回复");
-					if(adapter.getSelectedCnt()==0){
+					mAdapter.toggleSelected(arg2);
+					mAdapter.notifyDataSetChanged();
+					mActionMode.setTitle("已引用" + mAdapter.getSelectedCnt()
+							+ "个回复");
+					if (mAdapter.getSelectedCnt() == 0) {
 						mActionMode.finish();
 					}
-						
+
 				} else {
 
 				}
@@ -136,7 +137,7 @@ public class PostActivity extends SherlockActivity {
 		@Override
 		public void onDestroyActionMode(ActionMode mode) {
 			mActionMode = null;
-			adapter.endSelected();
+			mAdapter.endSelected();
 		}
 
 		@Override
@@ -148,8 +149,8 @@ public class PostActivity extends SherlockActivity {
 				String replyQuote = "";
 				BuPost tmpPost;
 				// 构造引用文本
-				for (Integer index : adapter.getSelected()) {
-					tmpPost = (BuPost) adapter.getItem(Integer.valueOf(index));
+				for (Integer index : mAdapter.getSelected()) {
+					tmpPost = (BuPost) mAdapter.getItem(Integer.valueOf(index));
 					replyQuote += "[quote][b]" + tmpPost.author + "[/b] "
 							+ tmpPost.lastedit + "\n" + tmpPost.content
 							+ "[/quote]\n";
@@ -221,35 +222,6 @@ public class PostActivity extends SherlockActivity {
 		new FetchPostsTask().execute();
 	}
 
-	public class LoginTask extends AsyncTask<Void, Void, Result> {
-
-		@Override
-		protected Result doInBackground(Void... arg0) {
-			return MainActivity.api.refresh();
-		}
-
-		@Override
-		protected void onPostExecute(Result result) {
-			switch (result) {
-			case SUCCESS:
-				new FetchPostsTask().execute();
-				break;
-			case SUCCESS_EMPTY:
-				break;
-			case FAILURE:
-				break;
-			case NETWRONG:
-				Toast.makeText(PostActivity.this, "网络错误", Toast.LENGTH_SHORT)
-						.show();
-				break;
-			default:
-				Toast.makeText(PostActivity.this, "未知错误", Toast.LENGTH_SHORT)
-						.show();
-				break;
-			}
-		}
-	}
-	
 	class FetchPostsTask extends AsyncTask<Void, Void, Result> {
 		ArrayList<BuPost> posts = new ArrayList<BuPost>();
 
@@ -269,35 +241,33 @@ public class PostActivity extends SherlockActivity {
 		protected void onPostExecute(Result result) {
 			switch (result) {
 			case SUCCESS:
-				data.clear();
+				mData.clear();
 				for (int i = 0; i < posts.size(); i++) {
-					data.add(posts.get(i));
+					mData.add(posts.get(i));
 				}
-				adapter.notifyDataSetChanged();
+				mAdapter.notifyDataSetChanged();
 				// 自动滚动到顶端显示
 				mListView.setSelection(0);
 				break;
 			case SUCCESS_EMPTY:
-				Toast.makeText(PostActivity.this, "没有数据", Toast.LENGTH_SHORT)
-						.show();
+				mFrom -= STEP;
+				showToast("没有数据");
 				break;
 			case FAILURE:
-				// 返回数据result字段为failure，刷新api，重新获取session，一般情况下第二次会获得正确数据
-				// 但如果有其他原因一直得不到数据，这个任务会一直进行，解决方法是设置重试次数
-				new LoginTask().execute();
-				Toast.makeText(PostActivity.this, "重新获取SESSION成功",
-						Toast.LENGTH_SHORT).show();
+				showToast("获取session失败");
 				break;
 			case NETWRONG:
-				Toast.makeText(PostActivity.this, "网络错误", Toast.LENGTH_SHORT)
-						.show();
+				showToast("网络错误");
 				break;
 			default:
-				Toast.makeText(PostActivity.this, "未知错误", Toast.LENGTH_SHORT)
-						.show();
+				showToast("未知错误");
 				break;
 			}
 		}
+	}
+
+	void showToast(String str) {
+		Toast.makeText(this, str, Toast.LENGTH_SHORT).show();
 	}
 
 	public class ReplyTask extends AsyncTask<String, Void, Result> {
@@ -314,29 +284,26 @@ public class PostActivity extends SherlockActivity {
 	}
 
 	class ListAdapter extends MainAdapter {
-		ArrayList<BuPost> mData;
+		ArrayList<BuPost> data;
 		ViewHolder holder;
 
 		public ListAdapter(Context context, ArrayList<BuPost> data) {
 			super(context);
-			this.mData = data;
+			this.data = data;
 		}
 
 		@Override
 		public int getCount() {
-			// TODO Auto-generated method stub
-			return mData.size();
+			return data.size();
 		}
 
 		@Override
 		public Object getItem(int position) {
-			// TODO Auto-generated method stub
-			return mData.get(position);
+			return data.get(position);
 		}
 
 		@Override
 		public long getItemId(int position) {
-			// TODO Auto-generated method stub
 			return position;
 		}
 
@@ -349,8 +316,6 @@ public class PostActivity extends SherlockActivity {
 
 		@Override
 		public View getView(int position, View convertView, ViewGroup parent) {
-
-			// @SuppressWarnings("unchecked")
 			BuPost item = (BuPost) getItem(position);
 			if (convertView == null) {
 				convertView = LayoutInflater.from(mContext).inflate(
@@ -370,35 +335,40 @@ public class PostActivity extends SherlockActivity {
 			} else {
 				holder = (ViewHolder) convertView.getTag();
 			}
+
 			// 显示引用信息部分
-			holder.quotesView.setVisibility(View.GONE);
 			String quoteString = "";
 			Quote tmpQuote;
 			for (int i = 0; i < item.quotes.size(); i++) {
 				tmpQuote = item.quotes.get(i);
-				if(i>0)
+				if (i > 0)
 					quoteString += "<br/><br/>";
-				quoteString += "&nbsp;&nbsp;&nbsp;"+tmpQuote.quoteAuthor + ":&nbsp;"+ tmpQuote.quoteContent ;
-				holder.quotesView.setVisibility(View.VISIBLE);
+				quoteString += "&nbsp;&nbsp;&nbsp;" + tmpQuote.quoteAuthor
+						+ ":&nbsp;" + tmpQuote.quoteContent;
 			}
-			
 			holder.quotesView
 					.setText(Html.fromHtml(quoteString, new ImageGetterFirst(
 							holder.quotesView, quoteString), null));
+
 			// 显示发帖人信息部分
 			holder.messageView.setText(Html.fromHtml(item.content,
 					new ImageGetterFirst(holder.messageView, item.content),
 					null));
 			holder.authorView.setText(item.author);
 			holder.lasteditView.setText(item.lastedit);
-			// 如果只引用了回复没有发表自己的message，那么messageView不显示（如果显示的话，
-			// 引用段落下面有一个大的空白，不美观；但如果没有message，也没有引用回复的话，如果不显示
-			// messageView，条目变成只含有作者和时间的一窄条，也不美观）
-			// if (item.quoteAuthor != null && item.content == "") {
-			// holder.messageView.setVisibility(View.GONE);
-			// } else {
-			// holder.messageView.setVisibility(View.VISIBLE);
-			// }
+
+			// 设置控件状态
+			if (item.quotes.size() > 0) {
+				holder.quotesView.setVisibility(View.VISIBLE);
+				if (item.content.equals("")) {
+					holder.messageView.setVisibility(View.GONE);
+				} else {
+					holder.messageView.setVisibility(View.VISIBLE);
+				}
+			} else {
+				holder.quotesView.setVisibility(View.GONE);
+				holder.messageView.setVisibility(View.VISIBLE);
+			}
 			if (mSelected
 					&& mSelectedIndexs.contains(Integer.valueOf(position))) {
 				convertView.setBackgroundColor(getResources().getColor(
@@ -406,10 +376,15 @@ public class PostActivity extends SherlockActivity {
 			} else {
 				convertView.setBackgroundResource(R.drawable.even_item);
 			}
+			convertView.invalidate();
 			return convertView;
 		}
 	}
 
+	/*
+	 * 
+	 * Textview中异步显示图片
+	 */
 	class ImageGetterFirst implements Html.ImageGetter {
 
 		Drawable defaultDrawable = getResources().getDrawable(
@@ -438,7 +413,6 @@ public class PostActivity extends SherlockActivity {
 						drawable.getIntrinsicHeight());
 			return drawable;
 		}
-
 	}
 
 	class ImageGetterSecond implements Html.ImageGetter {
@@ -450,7 +424,6 @@ public class PostActivity extends SherlockActivity {
 			}
 			return null;
 		}
-
 	}
 
 	class ImageDownloadData {

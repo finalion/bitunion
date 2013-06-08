@@ -36,7 +36,7 @@ public class LoginActivity extends SherlockActivity {
 			// 如果打开了自动登录功能，则用保存的账号登录，直接跳转到主界面
 			if (mAutoLogin) {
 				api = new BuAPI(mUsername, mPassword);
-				api.switchToNet(mNetType);
+				api.setNetType(mNetType);
 				new LoginTask().execute();
 				return;
 			}
@@ -69,7 +69,7 @@ public class LoginActivity extends SherlockActivity {
 				mAutoLogin = autologinCheck.isChecked();
 				api = new BuAPI(usernameText.getText().toString().trim(),
 						passwordText.getText().toString());
-				api.switchToNet(netType);
+				api.setNetType(netType);
 				new LoginTask().execute();
 				// Intent intent = new Intent(LoginActivity.this,
 				// MainActivity.class);

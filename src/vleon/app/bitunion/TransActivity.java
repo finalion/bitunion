@@ -4,7 +4,6 @@ import vleon.app.bitunion.api.BuAPI;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.widget.Toast;
 
 import com.actionbarsherlock.app.SherlockActivity;
 
@@ -16,7 +15,6 @@ public class TransActivity extends SherlockActivity {
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
-		// TODO Auto-generated method stub
 		super.onCreate(savedInstanceState);
 		readConfig();
 		// 读取保存的用户信息成功，用户并且设置了自动登录，跳转到主界面

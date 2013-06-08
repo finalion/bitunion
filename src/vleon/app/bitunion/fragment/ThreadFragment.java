@@ -49,17 +49,17 @@ public class ThreadFragment extends SherlockListFragment {
 	int mActionItemPosition = -1;
 	ProgressBar progressBar = null;
 
-//	Handler handler = new Handler(){
-//
-//		@Override
-//		public void handleMessage(Message msg) {
-//			switch(msg.what){
-//			case 
-//			}
-//		}
-//		
-//	};
-	
+	// Handler handler = new Handler(){
+	//
+	// @Override
+	// public void handleMessage(Message msg) {
+	// switch(msg.what){
+	// case
+	// }
+	// }
+	//
+	// };
+
 	public static ThreadFragment newInstance(int fid) {
 		ThreadFragment fragment = new ThreadFragment();
 		mFrom = 0;
@@ -72,16 +72,12 @@ public class ThreadFragment extends SherlockListFragment {
 
 	@Override
 	public void onSaveInstanceState(Bundle outState) {
-		// TODO Auto-generated method stub
 		super.onSaveInstanceState(outState);
-
 	}
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
-		// TODO Auto-generated method stub
 		super.onCreate(savedInstanceState);
-		// 在fragment中使能选项菜单
 		setHasOptionsMenu(true);
 	}
 
@@ -125,7 +121,7 @@ public class ThreadFragment extends SherlockListFragment {
 		mData = new ArrayList<BuThread>();
 		mAdapter = new ThreadsAdapter(getActivity(), mData);
 		setListAdapter(mAdapter);
-		new FetchThreadsTask().execute();
+		fetchThreads();
 	}
 
 	class ActionModeCallback implements ActionMode.Callback {
@@ -205,7 +201,7 @@ public class ThreadFragment extends SherlockListFragment {
 						}
 					}).show();
 		case R.id.menu_refresh:
-			new FetchThreadsTask().execute();
+			fetchThreads();
 			break;
 		case R.id.menu_next:
 			fetchNextPage();
@@ -226,7 +222,7 @@ public class ThreadFragment extends SherlockListFragment {
 			mAdapter.toggleSelected(position);
 			mAdapter.notifyDataSetChanged();
 			mActionMode.setTitle("已选择" + mAdapter.getSelectedCnt() + "帖");
-			if(mAdapter.getSelectedCnt()==0){
+			if (mAdapter.getSelectedCnt() == 0) {
 				mActionMode.finish();
 			}
 		} else {
@@ -238,58 +234,18 @@ public class ThreadFragment extends SherlockListFragment {
 		}
 
 	}
-	
 
-
-//	Runnable runnable = new Runnable() {
-//		
-//		@Override
-//		public void run() {
-//			if(MainActivity.api.refresh()== Result.SUCCESS){
-//				handler.sendEmptyMessage(0);
-//			}
-//		}
-//	};
-
-	public class LoginTask extends AsyncTask<Void, Void, Result> {
-
-		@Override
-		protected Result doInBackground(Void... arg0) {
-			return MainActivity.api.refresh();
-		}
-
-		@Override
-		protected void onPostExecute(Result result) {
-			switch (result) {
-			case SUCCESS:
-				new FetchThreadsTask().execute();
-				break;
-			case SUCCESS_EMPTY:
-				break;
-			case FAILURE:
-				break;
-			case NETWRONG:
-				Toast.makeText(getSherlockActivity(), "网络错误", Toast.LENGTH_SHORT)
-						.show();
-				break;
-			default:
-				Toast.makeText(getSherlockActivity(), "未知错误", Toast.LENGTH_SHORT)
-						.show();
-				break;
-			}
-		}
-	}
-	
 	public class NewThreadTask extends AsyncTask<String, Void, Result> {
 
 		@Override
 		protected Result doInBackground(String... arg0) {
-			return MainActivity.api.postThread(getArguments().getInt("fid"),arg0[0],arg0[1]);
+			return MainActivity.api.postThread(getArguments().getInt("fid"),
+					arg0[0], arg0[1]);
 		}
 
 		@Override
 		protected void onPostExecute(Result result) {
-			new FetchThreadsTask().execute();
+			fetchThreads();
 		}
 	}
 
@@ -298,7 +254,6 @@ public class ThreadFragment extends SherlockListFragment {
 
 		@Override
 		protected void onPreExecute() {
-			// TODO Auto-generated method stub
 			super.onPreExecute();
 			progressBar.setVisibility(View.VISIBLE);
 			threads.clear();
@@ -325,22 +280,17 @@ public class ThreadFragment extends SherlockListFragment {
 				ThreadFragment.this.setSelection(0);
 				break;
 			case SUCCESS_EMPTY:
-				Toast.makeText(getActivity(), "没有数据", Toast.LENGTH_SHORT)
-						.show();
+				mFrom -= STEP;
+				showToast("没有数据");
 				break;
 			case FAILURE:
-				// 返回数据result字段为failure，刷新api，重新获取session，一般情况下第二次会获得正确数据
-				// 但如果有其他原因一直得不到数据，这个任务会一直进行，解决方法是设置重试次数
-				new LoginTask().execute();
-				new FetchThreadsTask().execute();
+				showToast("获取session失败");
 				break;
 			case NETWRONG:
-				Toast.makeText(getActivity(), "网络错误", Toast.LENGTH_SHORT)
-						.show();
+				showToast("网络错误");
 				break;
 			default:
-				Toast.makeText(getActivity(), "未知错误", Toast.LENGTH_SHORT)
-						.show();
+				showToast("未知错误");
 				break;
 			}
 		}
@@ -425,16 +375,23 @@ public class ThreadFragment extends SherlockListFragment {
 		}
 	}
 
-	public void fetchNextPage() {
+	void fetchNextPage() {
 		mFrom += STEP;
-		new FetchThreadsTask().execute();
+		fetchThreads();
 	}
 
-	public void fetchPrevPage() {
+	void fetchPrevPage() {
 		mFrom -= STEP;
 		if (mFrom <= 0)
 			mFrom = 0;
+		fetchThreads();
+	}
+
+	void fetchThreads() {
 		new FetchThreadsTask().execute();
 	}
 
+	void showToast(String str) {
+		Toast.makeText(getSherlockActivity(), str, Toast.LENGTH_SHORT).show();
+	}
 }

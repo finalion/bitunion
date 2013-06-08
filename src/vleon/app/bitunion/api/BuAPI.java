@@ -32,6 +32,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import android.provider.SyncStateContract.Constants;
+
 public class BuAPI {
 	public static final int NETERROR = -1;
 	public static final int SESSIONERROR = 0;
@@ -40,23 +42,30 @@ public class BuAPI {
 	public static final int OUTNET = 1;
 	public static final int BITNET = 0;
 	// {"result":"fail","msg":"IP+logged"}
-	String BASEURL;
+	String ROOTURL,BASEURL;
 	String REQUEST_LOGGING, REQUEST_FORUM, REQUEST_THREAD, REQUEST_POST,
 			REQUEST_PROFILE, NEWPOST, NEWTHREAD;
 
+	// 如果返回Result为FAIL，msg字段一般为“IP+logged”，说明session失效
+	// autoRefreshSession开关决定是否重新刷新session
+	final boolean enableRefreshSession = true;
+	final int maxRefreshCnt = 2; // 最多重试两次
+	int refreshCnt = 0;
+
 	public enum Result {
-		SUCCESS, // 返回数据成功，result字段为success
-		FAILURE, // 返回数据失败，result字段为failure
-		SUCCESS_EMPTY, // 返回数据成功，但字段没有数据
-		SESSIONLOGIN, //
-		NETWRONG, // 没有返回数据
+		SUCCESS,                    // 返回数据成功，result字段为success
+		FAILURE,                    // 返回数据失败，result字段为failure
+		SUCCESS_EMPTY,              // 返回数据成功，但字段没有数据
+		SESSIONLOGIN,               // obsolete
+		NETWRONG,                   // 没有返回数据
+		NOTLOGIN,                   // api还未登录
 		UNKNOWN;
 		// 根据ordinal值获得枚举类型
-		public static Result valueOf(int ordinal) {
-			if (ordinal < 0 || ordinal >= values().length)
-				return UNKNOWN;
-			return values()[ordinal];
-		}
+//		public static Result valueOf(int ordinal) {
+//			if (ordinal < 0 || ordinal >= values().length)
+//				return UNKNOWN;
+//			return values()[ordinal];
+//		}
 	};
 
 	String mUsername, mPassword;
@@ -84,7 +93,7 @@ public class BuAPI {
 		HttpConnectionParams.setConnectionTimeout(httpParams, 2000);
 		HttpConnectionParams.setSoTimeout(httpParams, 3000);
 		client = new DefaultHttpClient(httpParams);
-		switchToNet(net);
+		setNetType(net);
 	}
 
 	public BuAPI(String username, String password, String session) {
@@ -93,20 +102,21 @@ public class BuAPI {
 		this.mSession = session;
 	}
 
-	public void switchToNet(int net) {
+	public void setNetType(int net) {
 		mNetType = net;
 		if (net == BITNET) {
-			BASEURL = "http://www.bitunion.org/open_api/";
+			ROOTURL = "http://www.bitunion.org";
 		} else if (net == OUTNET) {
-			BASEURL = "http://out.bitunion.org/open_api/";
+			ROOTURL = "http://out.bitunion.org";
 		}
-		REQUEST_LOGGING = BASEURL + "bu_logging.php";
-		REQUEST_FORUM = BASEURL + "bu_forum.php";
-		REQUEST_THREAD = BASEURL + "bu_thread.php";
-		REQUEST_PROFILE = BASEURL + "bu_profile.php";
-		REQUEST_POST = BASEURL + "bu_post.php";
-		NEWPOST = BASEURL + "bu_newpost.php";
-		NEWTHREAD = BASEURL + "bu_newpost.php";
+		BASEURL = ROOTURL+"/open_api";
+		REQUEST_LOGGING = BASEURL + "/bu_logging.php";
+		REQUEST_FORUM = BASEURL + "/bu_forum.php";
+		REQUEST_THREAD = BASEURL + "/bu_thread.php";
+		REQUEST_PROFILE = BASEURL + "/bu_profile.php";
+		REQUEST_POST = BASEURL + "/bu_post.php";
+		NEWPOST = BASEURL + "/bu_newpost.php";
+		NEWTHREAD = BASEURL + "/bu_newpost.php";
 	}
 
 	public boolean available() {
@@ -120,6 +130,7 @@ public class BuAPI {
 	}
 
 	public Result refresh() {
+		refreshCnt++;
 		return login();
 	}
 
@@ -142,6 +153,7 @@ public class BuAPI {
 			isLogined = true;
 			this.mSession = getString(obj, "session");
 			this.cookieStore = client.getCookieStore();
+			refreshCnt = 0;
 			return Result.SUCCESS;
 		} else {
 			isLogined = false;
@@ -170,6 +182,10 @@ public class BuAPI {
 			return Result.SUCCESS;
 		}
 		return Result.FAILURE;
+	}
+
+	private boolean canRefresh() {
+		return enableRefreshSession && (refreshCnt < maxRefreshCnt);
 	}
 
 	/*
@@ -241,19 +257,27 @@ public class BuAPI {
 			}
 			return Result.SUCCESS;
 		}
-		return Result.FAILURE;
+		// 返回failure的处理
+		if (result.equals("fail")) {
+			if (canRefresh()) {
+				refresh();
+				return getThreads(threads, fid, from, to);
+			}
+			return Result.FAILURE;
+		}
+		return Result.UNKNOWN;
 	}
 
 	/*
 	 * 得到指定帖子的详细信息
 	 */
-	public Result getPosts(ArrayList<BuPost> posts, String id, int from, int to) {
+	public Result getPosts(ArrayList<BuPost> posts, String tid, int from, int to) {
 		JSONObject jsonObj = new JSONObject();
 		try {
 			jsonObj.put("action", "post");
 			jsonObj.put("username", this.mUsername);
 			jsonObj.put("session", this.mSession);
-			jsonObj.put("tid", id);
+			jsonObj.put("tid", tid);
 			jsonObj.put("from", from + "");
 			jsonObj.put("to", to + "");
 		} catch (JSONException e1) {
@@ -273,7 +297,15 @@ public class BuAPI {
 			}
 			return Result.SUCCESS;
 		}
-		return Result.FAILURE;
+		// 返回failure的处理
+		if (result.equals("fail")) {
+			if (canRefresh()) {
+				refresh();
+				return getPosts(posts, tid, from, to);
+			}
+			return Result.FAILURE;
+		}
+		return Result.UNKNOWN;
 	}
 
 	/*
@@ -404,7 +436,12 @@ public class BuAPI {
 				String result = getString(tempobj, "result");
 				if (result.equals("success")) {
 					return Result.SUCCESS;
-				} else {
+				} 
+				if (result.equals("fail")) {
+					if (canRefresh()) {
+						refresh();
+						return post2(url, obj);
+					}
 					return Result.FAILURE;
 				}
 			}
@@ -422,7 +459,7 @@ public class BuAPI {
 				conn.disconnect();
 			}
 		}
-		return Result.NETWRONG;
+		return Result.UNKNOWN;
 	}
 
 	private JSONArray getData(JSONObject jsonObject, String dataName) {
@@ -481,12 +518,12 @@ public class BuAPI {
 			client.setCookieStore(this.cookieStore);
 			if (response.getStatusLine().getStatusCode() == 200) {
 				HttpEntity entity = response.getEntity();
-				if (entity.getContentLength() > 0){
+				if (entity.getContentLength() > 0) {
 					InputStream stream = entity.getContent();
-					int a=1;
+					int a = 1;
 					return stream;
 				}
-					
+
 			}
 		} catch (ClientProtocolException e) {
 			// TODO Auto-generated catch block
@@ -514,25 +551,4 @@ public class BuAPI {
 		return mNetType;
 	}
 
-	public void setNetType(int net) {
-		mNetType = net;
-	}
 }
-//
-//
-// class RequestResult {
-// String result, msg;
-//
-// public RequestResult(JSONObject obj) {
-// result = BuAPI.getString(obj, "result");
-// msg = BuAPI.getString(obj, "msg");
-// }
-//
-// public String getResult() {
-// return result;
-// }
-//
-// public String getMessage() {
-// return msg;
-// }
-// }
