@@ -106,6 +106,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
+//		if(android.os.Build.VERSION.SDK_INT<11)
 		switch (item.getItemId()) {
 		case android.R.id.home:
 			toggle();

@@ -4,7 +4,7 @@
         android:id="@+id/menu_refresh"
         android:icon="@drawable/navigation_refresh"
         android:orderInCategory="3"
-        android:showAsAction="ifRoom"
+        android:showAsAction="always"
         android:title="刷新">
     </item>
 <!--     <item
@@ -26,7 +26,7 @@
         android:orderInCategory="0"
         android:title="发表"
         android:icon="@drawable/content_new"
-        android:showAsAction="ifRoom">
+        android:showAsAction="always">
     </item>
 
 </menu>

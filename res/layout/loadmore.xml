@@ -9,6 +9,7 @@
         android:layout_height="match_parent"
         android:textSize="20sp" 
         android:id="@+id/loadNextPageView"
-        android:gravity="center"/>
+        android:gravity="center"
+        android:clickable="false"/>
 
 </LinearLayout>

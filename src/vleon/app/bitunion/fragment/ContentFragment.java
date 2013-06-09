@@ -67,6 +67,10 @@ public class ContentFragment extends SherlockListFragment implements
 			@Override
 			public boolean onItemLongClick(AdapterView<?> arg0, View arg1,
 					int arg2, long arg3) {
+				// 超出索引即最下面的loadmoreview被长按，不执行
+				if (arg2 >= mAdapter.getCount()) {
+					return false;
+				}
 				mActionItemPosition = arg2;
 				if (mActionMode != null) {
 					// if already in action mode - do nothing
@@ -82,7 +86,8 @@ public class ContentFragment extends SherlockListFragment implements
 				return true;
 			}
 		});
-		loadMoreView = LayoutInflater.from(getSherlockActivity()).inflate(R.layout.loadmore, null);
+		loadMoreView = LayoutInflater.from(getSherlockActivity()).inflate(
+				R.layout.loadmore, null);
 		loadNextPageView = (TextView) loadMoreView
 				.findViewById(R.id.loadNextPageView);
 
@@ -129,6 +134,7 @@ public class ContentFragment extends SherlockListFragment implements
 		case R.id.menu_post:
 			reply();
 		case R.id.menu_refresh:
+			mCurrentPageCnt = 0;
 			mAdapter.clear();
 			fetchContents();
 			break;
@@ -160,8 +166,8 @@ public class ContentFragment extends SherlockListFragment implements
 		public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
 			switch (item.getItemId()) {
 			case R.id.menu_hide:
-				break;
 			case R.id.menu_top:
+				showToast("功能还未引入!");
 				break;
 			case R.id.menu_quotereply:
 				replyOthers();
@@ -235,6 +241,10 @@ public class ContentFragment extends SherlockListFragment implements
 	@Override
 	public void onListItemClick(ListView l, View v, int position, long id) {
 		super.onListItemClick(l, v, position, id);
+		// 超出索引即最下面的loadmoreview被点击，不执行
+		if (position >= mAdapter.getCount()) {
+			return;
+		}
 		if (mActionMode != null) {
 			mAdapter.toggleSelected(position);
 			mActionMode.setTitle("已选择" + mAdapter.getSelectedCnt() + "帖");
@@ -249,10 +259,10 @@ public class ContentFragment extends SherlockListFragment implements
 				mActionMode.finish();
 			}
 		} else {
-			// TODO 单击列表项时的行为
-			mItemClickListener.onItemClicked(position);
+			if (getArguments().getInt("tag") == THREAD) {
+				mItemClickListener.onItemClicked(position);
+			}
 		}
-
 	}
 
 	@Override
