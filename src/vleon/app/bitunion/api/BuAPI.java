@@ -32,8 +32,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import android.provider.SyncStateContract.Constants;
-
 public class BuAPI {
 	public static final int NETERROR = -1;
 	public static final int SESSIONERROR = 0;
@@ -42,9 +40,9 @@ public class BuAPI {
 	public static final int OUTNET = 1;
 	public static final int BITNET = 0;
 	// {"result":"fail","msg":"IP+logged"}
-	String ROOTURL,BASEURL;
-	String REQUEST_LOGGING, REQUEST_FORUM, REQUEST_THREAD, REQUEST_POST,
-			REQUEST_PROFILE, NEWPOST, NEWTHREAD;
+	public static String ROOTURL, BASEURL;
+	public static String REQUEST_LOGGING, REQUEST_FORUM, REQUEST_THREAD,
+			REQUEST_POST, REQUEST_PROFILE, NEWPOST, NEWTHREAD;
 
 	// 如果返回Result为FAIL，msg字段一般为“IP+logged”，说明session失效
 	// autoRefreshSession开关决定是否重新刷新session
@@ -53,19 +51,19 @@ public class BuAPI {
 	int refreshCnt = 0;
 
 	public enum Result {
-		SUCCESS,                    // 返回数据成功，result字段为success
-		FAILURE,                    // 返回数据失败，result字段为failure
-		SUCCESS_EMPTY,              // 返回数据成功，但字段没有数据
-		SESSIONLOGIN,               // obsolete
-		NETWRONG,                   // 没有返回数据
-		NOTLOGIN,                   // api还未登录
+		SUCCESS, // 返回数据成功，result字段为success
+		FAILURE, // 返回数据失败，result字段为failure
+		SUCCESS_EMPTY, // 返回数据成功，但字段没有数据
+		SESSIONLOGIN, // obsolete
+		NETWRONG, // 没有返回数据
+		NOTLOGIN, // api还未登录
 		UNKNOWN;
 		// 根据ordinal值获得枚举类型
-//		public static Result valueOf(int ordinal) {
-//			if (ordinal < 0 || ordinal >= values().length)
-//				return UNKNOWN;
-//			return values()[ordinal];
-//		}
+		// public static Result valueOf(int ordinal) {
+		// if (ordinal < 0 || ordinal >= values().length)
+		// return UNKNOWN;
+		// return values()[ordinal];
+		// }
 	};
 
 	String mUsername, mPassword;
@@ -80,6 +78,9 @@ public class BuAPI {
 	int flagCnt = 0;
 	int mError = NONE;
 	int mNetType;
+
+	public BuAPI() {
+	}
 
 	public BuAPI(String username, String password) {
 		this(username, password, BITNET);
@@ -109,7 +110,7 @@ public class BuAPI {
 		} else if (net == OUTNET) {
 			ROOTURL = "http://out.bitunion.org";
 		}
-		BASEURL = ROOTURL+"/open_api";
+		BASEURL = ROOTURL + "/open_api";
 		REQUEST_LOGGING = BASEURL + "/bu_logging.php";
 		REQUEST_FORUM = BASEURL + "/bu_forum.php";
 		REQUEST_THREAD = BASEURL + "/bu_thread.php";
@@ -207,12 +208,13 @@ public class BuAPI {
 	/*
 	 * 查询用户信息
 	 */
-	public BuProfile getUserProfile(String username) {
+	public BuProfile getUserProfile(String uid) {
 		JSONObject jsonObj = new JSONObject();
 		try {
 			jsonObj.put("action", "profile");
-			jsonObj.put("username", username);
+			jsonObj.put("username", this.mUsername);
 			jsonObj.put("session", this.mSession);
+			jsonObj.put("uid", uid);
 		} catch (JSONException e1) {
 			e1.printStackTrace();
 		}
@@ -220,8 +222,10 @@ public class BuAPI {
 		if (obj == null) {
 			return null;
 		}
+
 		String result = getString(obj, "result");
 		if (result.equals("success")) {
+			obj = getObj(obj, "memberinfo");
 			return new BuProfile(obj);
 		}
 		return null;
@@ -249,7 +253,7 @@ public class BuAPI {
 		}
 		String result = getString(obj, "result");
 		if (result.equals("success")) {
-			JSONArray data = getData(obj, "threadlist");
+			JSONArray data = getArray(obj, "threadlist");
 			if (data == null)
 				return Result.SUCCESS_EMPTY;
 			for (int i = 0; i < data.length(); i++) {
@@ -289,7 +293,7 @@ public class BuAPI {
 		}
 		String result = getString(obj, "result");
 		if (result.equals("success")) {
-			JSONArray data = getData(obj, "postlist");
+			JSONArray data = getArray(obj, "postlist");
 			if (data == null)
 				return Result.SUCCESS_EMPTY;
 			for (int i = 0; i < data.length(); i++) {
@@ -362,21 +366,16 @@ public class BuAPI {
 			this.cookieStore = ((AbstractHttpClient) client).getCookieStore();
 			if (response.getStatusLine().getStatusCode() == 200) {
 				result = EntityUtils.toString(response.getEntity());
-
 				return new JSONObject(result);
 			}
 		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
-			result = e.getMessage().toString();
+
 		} catch (ClientProtocolException e) {
-			// TODO Auto-generated catch block
-			result = e.getMessage().toString();
+
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			result = e.getMessage().toString();
+
 		} catch (JSONException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+
 		}
 		return null;
 	}
@@ -436,7 +435,7 @@ public class BuAPI {
 				String result = getString(tempobj, "result");
 				if (result.equals("success")) {
 					return Result.SUCCESS;
-				} 
+				}
 				if (result.equals("fail")) {
 					if (canRefresh()) {
 						refresh();
@@ -462,9 +461,17 @@ public class BuAPI {
 		return Result.UNKNOWN;
 	}
 
-	private JSONArray getData(JSONObject jsonObject, String dataName) {
+	private JSONArray getArray(JSONObject jsonObject, String dataName) {
 		try {
 			return jsonObject.getJSONArray(dataName);
+		} catch (JSONException e) {
+			return null;
+		}
+	}
+
+	private JSONObject getObj(JSONObject jsonObject, String dataName) {
+		try {
+			return jsonObject.getJSONObject(dataName);
 		} catch (JSONException e) {
 			return null;
 		}
@@ -503,33 +510,23 @@ public class BuAPI {
 	}
 
 	// 下载图片
-	public InputStream getImageStream(String url) {
-		if (mNetType == OUTNET) {
-			url = url.replace("www.bitunion.org", "out.bitunion.org");
-		}
-		url = url.replace("//bitunion.org", "//www.bitunion.org");
+	public static InputStream getImageStream(String url) {
 		HttpGet httpGet = new HttpGet(url);
 		HttpResponse response;
 		try {
-			httpGet.setHeader("Referer", "http://www.bitunion.org");
+			httpGet.setHeader("Referer", ROOTURL);
 			DefaultHttpClient client2 = new DefaultHttpClient();
-			// client2.setCookieStore(this.cookieStore);
-			response = client.execute(httpGet);
-			client.setCookieStore(this.cookieStore);
+			response = client2.execute(httpGet);
 			if (response.getStatusLine().getStatusCode() == 200) {
 				HttpEntity entity = response.getEntity();
 				if (entity.getContentLength() > 0) {
-					InputStream stream = entity.getContent();
-					int a = 1;
-					return stream;
+					return entity.getContent();
 				}
 
 			}
 		} catch (ClientProtocolException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return null;

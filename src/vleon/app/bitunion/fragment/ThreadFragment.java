@@ -8,26 +8,20 @@ import vleon.app.bitunion.PostActivity;
 import vleon.app.bitunion.R;
 import vleon.app.bitunion.api.BuAPI.Result;
 import vleon.app.bitunion.api.BuThread;
-import android.R.integer;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
-import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
+import android.support.v4.app.FragmentTransaction;
 import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AbsListView.MultiChoiceModeListener;
 import android.widget.AdapterView;
-import android.widget.AdapterView.OnItemClickListener;
 import android.widget.AdapterView.OnItemLongClickListener;
-import android.widget.BaseAdapter;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.ProgressBar;
@@ -47,18 +41,7 @@ public class ThreadFragment extends SherlockListFragment {
 	final int STEP = 20;
 	ActionMode mActionMode;
 	int mActionItemPosition = -1;
-	ProgressBar progressBar = null;
-
-	// Handler handler = new Handler(){
-	//
-	// @Override
-	// public void handleMessage(Message msg) {
-	// switch(msg.what){
-	// case
-	// }
-	// }
-	//
-	// };
+	MenuItem mRefreshItem;
 
 	public static ThreadFragment newInstance(int fid) {
 		ThreadFragment fragment = new ThreadFragment();
@@ -84,18 +67,15 @@ public class ThreadFragment extends SherlockListFragment {
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
 			Bundle savedInstanceState) {
-		// TODO Auto-generated method stub
 		return inflater.inflate(R.layout.thread_fragment, container, false);
 	}
 
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
-		// TODO Auto-generated method stub
 		super.onActivityCreated(savedInstanceState);
-		progressBar = (ProgressBar) getView().findViewById(R.id.progressBar1);
 
 		/*
-		 * 长按事件触发时，如果不反悔true，onListItemClick单击事件也会触发, 否则会一直分发事件直到触发单击
+		 * 长按事件触发时，如果不返回true，onListItemClick单击事件也会触发, 否则会一直分发事件直到触发单击
 		 */
 		getListView().setOnItemLongClickListener(new OnItemLongClickListener() {
 
@@ -135,29 +115,30 @@ public class ThreadFragment extends SherlockListFragment {
 
 		@Override
 		public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
-			// TODO Auto-generated method stub
-			return false;
+			// mode.getMenuInflater().inflate(R.menu.thread_context_menu, menu);
+			return true;
 		}
 
 		@Override
 		public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
-			String string = (String) mode.getTitle();
 			switch (item.getItemId()) {
 			case R.id.menu_hide:
-				Toast.makeText(getActivity(),
-						"隐藏: " + mData.get(mActionItemPosition).subject,
-						Toast.LENGTH_SHORT).show();
-				mode.finish();
-				return true;
+				break;
 			case R.id.menu_top:
-				Toast.makeText(
-						getActivity(),
-						"置顶: " + mData.get(mActionItemPosition).subject
-								+ string, Toast.LENGTH_SHORT).show();
-				return true;
+				break;
+			case R.id.menu_profile:
+				BuThread t = (BuThread) mAdapter.getItem(Integer
+						.valueOf(mAdapter.getSelected().get(0)));
+				ProfileFragment fragment = ProfileFragment.newInstance(
+						t.authorid, t.author);
+				FragmentTransaction ft = getSherlockActivity()
+						.getSupportFragmentManager().beginTransaction();
+				fragment.show(ft, "作者信息");
+				break;
 			default:
-				return false;
+				break;
 			}
+			return true;
 		}
 
 		@Override
@@ -166,13 +147,20 @@ public class ThreadFragment extends SherlockListFragment {
 			mAdapter.endSelected();
 		}
 
+		public void disableProfileItem() {
+
+		}
 	}
 
 	@Override
-	public void onCreateOptionsMenu(com.actionbarsherlock.view.Menu menu,
-			MenuInflater inflater) {
+	public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
 		inflater.inflate(R.menu.thread, menu);
 		super.onCreateOptionsMenu(menu, inflater);
+	}
+
+	@Override
+	public void onPrepareOptionsMenu(Menu menu) {
+		super.onPrepareOptionsMenu(menu);
 	}
 
 	@Override
@@ -201,6 +189,8 @@ public class ThreadFragment extends SherlockListFragment {
 						}
 					}).show();
 		case R.id.menu_refresh:
+			mRefreshItem = item;
+			mRefreshItem.setActionView(R.layout.progress);
 			fetchThreads();
 			break;
 		case R.id.menu_next:
@@ -220,8 +210,15 @@ public class ThreadFragment extends SherlockListFragment {
 		super.onListItemClick(l, v, position, id);
 		if (mActionMode != null) {
 			mAdapter.toggleSelected(position);
-			mAdapter.notifyDataSetChanged();
+			// mAdapter.notifyDataSetChanged();
 			mActionMode.setTitle("已选择" + mAdapter.getSelectedCnt() + "帖");
+			if (mAdapter.getSelectedCnt() > 1) {
+				mActionMode.getMenu().findItem(R.id.menu_profile)
+						.setVisible(false);
+			} else {
+				mActionMode.getMenu().findItem(R.id.menu_profile)
+						.setVisible(true);
+			}
 			if (mAdapter.getSelectedCnt() == 0) {
 				mActionMode.finish();
 			}
@@ -255,7 +252,6 @@ public class ThreadFragment extends SherlockListFragment {
 		@Override
 		protected void onPreExecute() {
 			super.onPreExecute();
-			progressBar.setVisibility(View.VISIBLE);
 			threads.clear();
 		}
 
@@ -268,7 +264,9 @@ public class ThreadFragment extends SherlockListFragment {
 
 		@Override
 		protected void onPostExecute(Result result) {
-			progressBar.setVisibility(View.GONE);
+			if (mRefreshItem!=null && mRefreshItem.getActionView() != null) {
+				mRefreshItem.setActionView(null);
+			}
 			switch (result) {
 			case SUCCESS:
 				mData.clear();

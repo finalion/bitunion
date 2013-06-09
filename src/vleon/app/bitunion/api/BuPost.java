@@ -6,14 +6,12 @@ import java.util.regex.Pattern;
 
 import org.json.JSONObject;
 
-import vleon.app.bitunion.Constants;
-
 public class BuPost {
 
 	public String pid, fid, tid, aid, icon;
 	public String content;
 	public ArrayList<Quote> quotes;
-//	public String all;
+	// public String all;
 	public String author;
 	public String authorid;
 	public String subject;
@@ -31,11 +29,12 @@ public class BuPost {
 		parseMessage(message);
 		// "attachimg":1,"attachment":"attachments%2Fforumid_14%2FX%2Fo%2FXoEp_MjAxMjA3MDk%3D.jpg"
 		if (BuAPI.getInt(obj, "attachimg") == 1) {
-			attachmentImg = Constants.ROOT_URL
+			attachmentImg = BuAPI.ROOTURL + "/"
 					+ BuAPI.getString(obj, "attachment");
 			content = content + "<br/><img src='" + attachmentImg + "'>";
 		}
 		aid = BuAPI.getString(obj, "aid");
+		authorid = BuAPI.getString(obj, "authorid");
 		pid = BuAPI.getString(obj, "pid");
 		subject = BuAPI.getString(obj, "subject");
 		author = BuAPI.getString(obj, "author");
@@ -69,7 +68,7 @@ public class BuPost {
 		// String src = matcher.group(1);
 		// content = content.replace("../", Constants.ROOT_URL);
 		// }
-		content = content.replace("../", Constants.ROOT_URL);
+		content = content.replace("../", BuAPI.ROOTURL + "/");
 		return content;
 	}
 
@@ -98,7 +97,8 @@ public class BuPost {
 		Matcher m = p.matcher(message);
 		while (m.find()) {
 			// 1: author; 2:time; 3:content
-			quotes.add(new Quote(m.group(1),m.group(2),parseParagraph(m.group(3))));
+			quotes.add(new Quote(m.group(1), m.group(2), parseParagraph(m
+					.group(3))));
 			message = message.replace(m.group(0), "");
 		}
 		return message;

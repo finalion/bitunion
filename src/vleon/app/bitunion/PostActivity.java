@@ -5,10 +5,11 @@ import java.lang.ref.SoftReference;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import vleon.app.bitunion.api.BuAPI;
 import vleon.app.bitunion.api.BuAPI.Result;
 import vleon.app.bitunion.api.BuPost;
 import vleon.app.bitunion.api.Quote;
-import vleon.app.bitunion.fragment.ThreadFragment.FetchThreadsTask;
+import vleon.app.bitunion.fragment.ProfileFragment;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -16,6 +17,7 @@ import android.content.DialogInterface.OnClickListener;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v4.app.FragmentManager;
 import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -23,22 +25,21 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.AdapterView.OnItemLongClickListener;
-import android.widget.BaseAdapter;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
-import android.widget.RelativeLayout.LayoutParams;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.actionbarsherlock.app.SherlockActivity;
+import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.actionbarsherlock.view.ActionMode;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuInflater;
 import com.actionbarsherlock.view.MenuItem;
 
-public class PostActivity extends SherlockActivity {
+public class PostActivity extends SherlockFragmentActivity {
 	private String mTid;
 	private String mSubject;
 	ArrayList<BuPost> mData = new ArrayList<BuPost>();
@@ -49,7 +50,7 @@ public class PostActivity extends SherlockActivity {
 	final int STEP = 20;
 	HashMap<String, SoftReference<Drawable>> mDrawableCache;
 	ActionMode mActionMode;
-
+	FragmentManager mFragManager;
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -64,6 +65,7 @@ public class PostActivity extends SherlockActivity {
 		mListView.setAdapter(mAdapter);
 		mFrom = 0;
 		mDrawableCache = new HashMap<String, SoftReference<Drawable>>();
+		mFragManager = getSupportFragmentManager();
 		fetchPosts();
 
 		mListView.setOnItemLongClickListener(new OnItemLongClickListener() {
@@ -158,6 +160,12 @@ public class PostActivity extends SherlockActivity {
 				showReplyDialog(replyQuote);
 				mode.finish();
 				return true;
+			case R.id.menu_profile2:
+				BuPost p = (BuPost) mAdapter.getItem(Integer
+						.valueOf(mAdapter.getSelected().get(0)));
+				ProfileFragment fragment = ProfileFragment.newInstance(
+						p.authorid, p.author);
+				fragment.show(mFragManager, "作者信息");
 			default:
 				return false;
 			}
@@ -376,13 +384,12 @@ public class PostActivity extends SherlockActivity {
 			} else {
 				convertView.setBackgroundResource(R.drawable.even_item);
 			}
-			convertView.invalidate();
+			// mListView.invalidateViews();
 			return convertView;
 		}
 	}
 
 	/*
-	 * 
 	 * Textview中异步显示图片
 	 */
 	class ImageGetterFirst implements Html.ImageGetter {
@@ -461,8 +468,8 @@ public class PostActivity extends SherlockActivity {
 		@Override
 		protected Drawable doInBackground(String... params) {
 			Drawable drawable;
-			InputStream stream = MainActivity.api
-					.getImageStream(mImageDownloadData.getImageSource());
+			InputStream stream = BuAPI.getImageStream(mImageDownloadData
+					.getImageSource());
 			if (stream != null) {
 				drawable = Drawable.createFromStream(stream, "src");
 				// 如果图片为不能访问的外部图片，此时返回的drawable为null

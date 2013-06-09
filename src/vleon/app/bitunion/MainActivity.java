@@ -1,7 +1,6 @@
 package vleon.app.bitunion;
 
 import java.util.ArrayList;
-
 import vleon.app.bitunion.api.BuAPI;
 import vleon.app.bitunion.api.BuAPI.Result;
 import vleon.app.bitunion.api.BuForum;
@@ -73,20 +72,6 @@ public class MainActivity extends SlidingFragmentActivity implements
 	}
 
 	@Override
-	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-		// TODO Auto-generated method stub
-		super.onActivityResult(requestCode, resultCode, data);
-		if (requestCode == LOGIN_REQUEST_CODE && resultCode == RESULT_OK) {
-			// Bundle tents = data.getExtras();
-			mAutoLogin = data.getBooleanExtra("autologin", true);
-			mUsername = data.getStringExtra("username");
-			mPassword = data.getStringExtra("password");
-			mNetType = data.getIntExtra("nettype", BuAPI.BITNET);
-			new LoginTask().execute();
-		}
-	}
-
-	@Override
 	protected void onPause() {
 		super.onPause();
 		// saveConfig();
@@ -126,8 +111,8 @@ public class MainActivity extends SlidingFragmentActivity implements
 			break;
 		case R.id.menu_logout:
 			api.logout();
-			startActivityForResult(new Intent(MainActivity.this,
-					LoginActivity.class), LOGIN_REQUEST_CODE);
+			startActivity(new Intent(MainActivity.this, LoginActivity.class));
+			finish();
 			break;
 		}
 		return super.onOptionsItemSelected(item);
@@ -170,13 +155,11 @@ public class MainActivity extends SlidingFragmentActivity implements
 			case NETWRONG:
 				break;
 			case UNKNOWN:
-				break;
 			default:
 				break;
 			}
-			Toast.makeText(MainActivity.this,
-					"登录结果: " + result.toString(), Toast.LENGTH_SHORT)
-					.show();	
+			Toast.makeText(MainActivity.this, "登录结果: " + result.toString(),
+					Toast.LENGTH_SHORT).show();
 		}
 	}
 

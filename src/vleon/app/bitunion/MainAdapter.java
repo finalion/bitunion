@@ -2,7 +2,6 @@ package vleon.app.bitunion;
 
 import java.util.ArrayList;
 
-import vleon.app.bitunion.api.BuPost;
 import android.content.Context;
 import android.view.View;
 import android.view.ViewGroup;
@@ -28,6 +27,7 @@ public class MainAdapter extends BaseAdapter {
 		} else {
 			mSelectedIndexs.add(p);
 		}
+		notifyDataSetChanged();
 	}
 
 	public int getSelectedCnt() {

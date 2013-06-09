@@ -6,11 +6,11 @@ public class BuThread {
 
 	public String tid;
 	public String author;
-	String authorid;
+	public String authorid;
 	public String subject;
-	String dateline;
+	public String dateline;
 	public String lastpost;
-	String lastposter;
+	public String lastposter;
 	public String views;
 	public String replies;
 	public boolean topFlag;

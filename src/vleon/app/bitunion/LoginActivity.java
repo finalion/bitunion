@@ -113,16 +113,12 @@ public class LoginActivity extends SherlockActivity {
 			default:
 				break;
 			}
-			// Toast.makeText(MainActivity.this,
-			// "Login Result: " + result.toString(), Toast.LENGTH_SHORT)
-			// .show();
 			Intent intent = new Intent(LoginActivity.this, MainActivity.class);
 			intent.setFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
 			intent.putExtra("autologin", mAutoLogin);
 			intent.putExtra("username", mUsername);
 			intent.putExtra("password", mPassword);
 			intent.putExtra("nettype", netType);
-			// setResult(RESULT_OK, intent);
 			startActivity(intent);
 			finish();
 			overridePendingTransition(0, 0);

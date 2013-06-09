@@ -6,5 +6,11 @@
         android:title="引用"
         android:icon="@drawable/quote">
     </item>
-
+    <item
+        android:id="@+id/menu_profile2"
+        android:icon="@drawable/person"
+        android:orderInCategory="2"
+        android:showAsAction="always"
+        android:title="资料">
+    </item>
 </menu>
