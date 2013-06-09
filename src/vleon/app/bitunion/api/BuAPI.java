@@ -359,13 +359,12 @@ public class BuAPI {
 	 */
 	private JSONObject post(String url, JSONObject obj) {
 		HttpPost httpPost = new HttpPost(url);
-		String result = null;
 		try {
 			httpPost.setEntity(new StringEntity(obj.toString()));
 			HttpResponse response = client.execute(httpPost);
 			this.cookieStore = ((AbstractHttpClient) client).getCookieStore();
 			if (response.getStatusLine().getStatusCode() == 200) {
-				result = EntityUtils.toString(response.getEntity());
+				String result = EntityUtils.toString(response.getEntity());
 				return new JSONObject(result);
 			}
 		} catch (UnsupportedEncodingException e) {

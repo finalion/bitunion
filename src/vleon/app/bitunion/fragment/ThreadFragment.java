@@ -11,7 +11,6 @@ import vleon.app.bitunion.api.BuThread;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -19,12 +18,15 @@ import android.support.v4.app.FragmentTransaction;
 import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.widget.AbsListView;
+import android.widget.AbsListView.OnScrollListener;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemLongClickListener;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -34,7 +36,8 @@ import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuInflater;
 import com.actionbarsherlock.view.MenuItem;
 
-public class ThreadFragment extends SherlockListFragment {
+public class ThreadFragment extends SherlockListFragment implements
+		OnScrollListener {
 	private ArrayList<BuThread> mData;
 	private ThreadsAdapter mAdapter;
 	private static int mFrom;
@@ -42,6 +45,8 @@ public class ThreadFragment extends SherlockListFragment {
 	ActionMode mActionMode;
 	int mActionItemPosition = -1;
 	MenuItem mRefreshItem;
+	int visibleItemCount, visibleLastIndex;
+	Button loadNextPageView = null;
 
 	public static ThreadFragment newInstance(int fid) {
 		ThreadFragment fragment = new ThreadFragment();
@@ -49,13 +54,7 @@ public class ThreadFragment extends SherlockListFragment {
 		Bundle args = new Bundle();
 		args.putInt("fid", fid);
 		fragment.setArguments(args);
-
 		return fragment;
-	}
-
-	@Override
-	public void onSaveInstanceState(Bundle outState) {
-		super.onSaveInstanceState(outState);
 	}
 
 	@Override
@@ -97,7 +96,19 @@ public class ThreadFragment extends SherlockListFragment {
 				return true;
 			}
 		});
-
+		View loadMoreView = LayoutInflater.from(getSherlockActivity()).inflate(
+				R.layout.loadmore, null);
+		getListView().addFooterView(loadMoreView, null, true);
+		getListView().setOnScrollListener(this);
+		loadNextPageView = (Button) loadMoreView
+				.findViewById(R.id.loadNextPageView);
+		loadNextPageView.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				fetchNextPage();
+			}
+		});
 		mData = new ArrayList<BuThread>();
 		mAdapter = new ThreadsAdapter(getActivity(), mData);
 		setListAdapter(mAdapter);
@@ -171,13 +182,13 @@ public class ThreadFragment extends SherlockListFragment {
 					.inflate(R.layout.newthread_dialog, null);
 			new AlertDialog.Builder(getSherlockActivity()).setView(view)
 					.setTitle("发表新帖")
-					.setNegativeButton("取消", new OnClickListener() {
+					.setNegativeButton("取消", new DialogInterface.OnClickListener() {
 
 						@Override
 						public void onClick(DialogInterface dialog, int which) {
 
 						}
-					}).setPositiveButton("发表", new OnClickListener() {
+					}).setPositiveButton("发表", new DialogInterface.OnClickListener() {
 
 						@Override
 						public void onClick(DialogInterface dialog, int which) {
@@ -224,10 +235,12 @@ public class ThreadFragment extends SherlockListFragment {
 			}
 		} else {
 			Intent intent = new Intent(getActivity(), PostActivity.class);
-			BuThread thread = mData.get(position);
-			intent.putExtra("id", thread.tid);
-			intent.putExtra("subject", thread.subject);
-			startActivity(intent);
+			if (position != mAdapter.getCount()) {
+				BuThread thread = mData.get(position);
+				intent.putExtra("id", thread.tid);
+				intent.putExtra("subject", thread.subject);
+				startActivity(intent);
+			}
 		}
 
 	}
@@ -264,7 +277,7 @@ public class ThreadFragment extends SherlockListFragment {
 
 		@Override
 		protected void onPostExecute(Result result) {
-			if (mRefreshItem!=null && mRefreshItem.getActionView() != null) {
+			if (mRefreshItem != null && mRefreshItem.getActionView() != null) {
 				mRefreshItem.setActionView(null);
 			}
 			switch (result) {
@@ -357,11 +370,6 @@ public class ThreadFragment extends SherlockListFragment {
 			} else {
 				holder.flagView.setVisibility(View.GONE);
 			}
-			// if (position % 2 == 0) {
-			// convertView.setBackgroundResource(R.drawable.odd_item);
-			// } else {
-			// convertView.setBackgroundResource(R.drawable.even_item);
-			// }
 			if (mSelected
 					&& mSelectedIndexs.contains(Integer.valueOf(position))) {
 				convertView.setBackgroundColor(getResources().getColor(
@@ -372,6 +380,7 @@ public class ThreadFragment extends SherlockListFragment {
 			return convertView;
 		}
 	}
+
 
 	void fetchNextPage() {
 		mFrom += STEP;
@@ -391,5 +400,23 @@ public class ThreadFragment extends SherlockListFragment {
 
 	void showToast(String str) {
 		Toast.makeText(getSherlockActivity(), str, Toast.LENGTH_SHORT).show();
+	}
+
+	@Override
+	public void onScroll(AbsListView view, int firstVisibleItem,
+			int visibleItemCount, int totalItemCount) {
+		this.visibleItemCount = visibleItemCount;
+		visibleLastIndex = firstVisibleItem + visibleItemCount - 1;
+	}
+
+	@Override
+	public void onScrollStateChanged(AbsListView view, int scrollState) {
+		int itemsLastIndex = mAdapter.getCount() - 1; // 数据集最后一项的索引
+		int lastIndex = itemsLastIndex + 1; // 加上底部的loadMoreView项
+		if (scrollState == OnScrollListener.SCROLL_STATE_IDLE
+				&& visibleLastIndex == lastIndex) {
+			// 如果是自动加载,可以在这里放置异步加载数据的代码
+			// Log.i("LOADMORE", "loading...");
+		}
 	}
 }

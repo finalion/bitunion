@@ -12,7 +12,10 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
+import android.view.View;
+import android.widget.AbsListView;
 import android.widget.Toast;
+import android.widget.AbsListView.OnScrollListener;
 
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
@@ -169,4 +172,5 @@ public class MainActivity extends SlidingFragmentActivity implements
 		showForum(fid, name);
 	}
 
+	
 }
