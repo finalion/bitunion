@@ -1,15 +1,17 @@
-package vleon.app.bitunion;
+package vleon.app.bitunion.fragment;
 
 import java.io.InputStream;
 import java.lang.ref.SoftReference;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import vleon.app.bitunion.MainActivity;
+import vleon.app.bitunion.MainAdapter;
+import vleon.app.bitunion.R;
 import vleon.app.bitunion.api.BuAPI;
 import vleon.app.bitunion.api.BuAPI.Result;
 import vleon.app.bitunion.api.BuPost;
 import vleon.app.bitunion.api.Quote;
-import vleon.app.bitunion.fragment.ProfileFragment;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -17,170 +19,85 @@ import android.content.DialogInterface.OnClickListener;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.v4.app.FragmentManager;
 import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.AdapterView.OnItemClickListener;
-import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import com.actionbarsherlock.app.SherlockActivity;
-import com.actionbarsherlock.app.SherlockFragmentActivity;
-import com.actionbarsherlock.view.ActionMode;
 import com.actionbarsherlock.view.Menu;
-import com.actionbarsherlock.view.MenuInflater;
-import com.actionbarsherlock.view.MenuItem;
 
-public class PostActivity extends SherlockFragmentActivity {
-	private String mTid;
-	private String mSubject;
-	ArrayList<BuPost> mData = new ArrayList<BuPost>();
-	ListAdapter mAdapter = null;
-	ListView mListView;
-	TextView mTitleView;
-	int mFrom;
-	final int STEP = 20;
+public class PostFragment extends ContentFragment {
 	HashMap<String, SoftReference<Drawable>> mDrawableCache;
-	ActionMode mActionMode;
-	FragmentManager mFragManager;
+	private ArrayList<BuPost> mPosts;
+	TextView titleView;
+
+	public static PostFragment newInstance(String tid, String subject) {
+		PostFragment fragment = new PostFragment();
+		Bundle args = new Bundle();
+		args.putString("tid", tid);
+		args.putString("subject", subject);
+		args.putInt("tag", POST);
+		fragment.setArguments(args);
+		return fragment;
+	}
+
 	@Override
-	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_posts);
-		getActionBar().setDisplayHomeAsUpEnabled(true);
-		mTid = getIntent().getStringExtra("id");
-		mSubject = getIntent().getStringExtra("subject");
-		mListView = (ListView) findViewById(R.id.post_list);
-		mTitleView = (TextView) findViewById(R.id.title_text);
-		mTitleView.setText(Html.fromHtml(mSubject));
-		mAdapter = new ListAdapter(this, mData);
-		mListView.setAdapter(mAdapter);
-		mFrom = 0;
+	public View onCreateView(LayoutInflater inflater, ViewGroup container,
+			Bundle savedInstanceState) {
+		return inflater.inflate(R.layout.post_fragment, container, false);
+	}
+
+	@Override
+	public void onActivityCreated(Bundle savedInstanceState) {
+		super.onActivityCreated(savedInstanceState);
+		titleView = (TextView) getSherlockActivity().findViewById(
+				R.id.titleView);
+		titleView.setText(getArguments().getString("subject"));
 		mDrawableCache = new HashMap<String, SoftReference<Drawable>>();
-		mFragManager = getSupportFragmentManager();
-		fetchPosts();
-
-		mListView.setOnItemLongClickListener(new OnItemLongClickListener() {
-
-			@Override
-			public boolean onItemLongClick(AdapterView<?> arg0, View arg1,
-					int arg2, long arg3) {
-				if (mActionMode != null) {
-					// if already in action mode - do nothing
-					return false;
-				}
-				mAdapter.beginSelected();
-				mAdapter.addSelects(arg2);
-				mAdapter.notifyDataSetChanged();
-				mActionMode = PostActivity.this
-						.startActionMode(new ActionModeCallback());
-				mActionMode.invalidate();
-				mActionMode.setTitle("已引用" + mAdapter.getSelectedCnt() + "个回复");
-				return true;
-			}
-		});
-		mListView.setOnItemClickListener(new OnItemClickListener() {
-
-			@Override
-			public void onItemClick(AdapterView<?> arg0, View arg1, int arg2,
-					long arg3) {
-				if (mActionMode != null) {
-					mAdapter.toggleSelected(arg2);
-					mAdapter.notifyDataSetChanged();
-					mActionMode.setTitle("已引用" + mAdapter.getSelectedCnt()
-							+ "个回复");
-					if (mAdapter.getSelectedCnt() == 0) {
-						mActionMode.finish();
-					}
-
-				} else {
-
-				}
-			}
-		});
+		mPosts = new ArrayList<BuPost>();
+		mAdapter = new PostsAdapter(getSherlockActivity(), mPosts);
+		setListAdapter(mAdapter);
+		fetchContents();
 	}
 
 	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		// Inflate the menu; this adds items to the action bar if it is present.
-		getSupportMenuInflater().inflate(R.menu.thread, menu);
-		return true;
-	}
-
-	@Override
-	public boolean onPrepareOptionsMenu(Menu menu) {
+	public void onPrepareOptionsMenu(Menu menu) {
+		super.onPrepareOptionsMenu(menu);
 		menu.findItem(R.id.menu_post).setIcon(R.drawable.social_reply);
 		menu.findItem(R.id.menu_post).setTitle("回复");
-		return super.onPrepareOptionsMenu(menu);
 	}
 
-	class ActionModeCallback implements ActionMode.Callback {
+	@Override
+	public void reply() {
+		showReplyDialog("");
+	}
 
-		@Override
-		public boolean onCreateActionMode(ActionMode mode, Menu menu) {
-			MenuInflater inflater = mode.getMenuInflater();
-			inflater.inflate(R.menu.post_context_menu, menu);
-			return true;
+	@Override
+	public void replyOthers() {
+		String replyQuote = "";
+		BuPost tmpPost;
+		// 构造引用文本
+		for (Integer index : mAdapter.getSelected()) {
+			tmpPost = (BuPost) mAdapter.getItem(Integer.valueOf(index));
+			replyQuote += "[quote][b]" + tmpPost.author + "[/b] "
+					+ tmpPost.lastedit + "\n" + tmpPost.content + "[/quote]\n";
 		}
-
-		@Override
-		public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
-			return false;
-		}
-
-		@Override
-		public void onDestroyActionMode(ActionMode mode) {
-			mActionMode = null;
-			mAdapter.endSelected();
-		}
-
-		@Override
-		public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
-			switch (item.getItemId()) {
-			case R.id.menu_quotereply:
-				Toast.makeText(PostActivity.this, "引用: ", Toast.LENGTH_SHORT)
-						.show();
-				String replyQuote = "";
-				BuPost tmpPost;
-				// 构造引用文本
-				for (Integer index : mAdapter.getSelected()) {
-					tmpPost = (BuPost) mAdapter.getItem(Integer.valueOf(index));
-					replyQuote += "[quote][b]" + tmpPost.author + "[/b] "
-							+ tmpPost.lastedit + "\n" + tmpPost.content
-							+ "[/quote]\n";
-				}
-				showReplyDialog(replyQuote);
-				mode.finish();
-				return true;
-			case R.id.menu_profile2:
-				BuPost p = (BuPost) mAdapter.getItem(Integer
-						.valueOf(mAdapter.getSelected().get(0)));
-				ProfileFragment fragment = ProfileFragment.newInstance(
-						p.authorid, p.author);
-				fragment.show(mFragManager, "作者信息");
-			default:
-				return false;
-			}
-		}
-
+		showReplyDialog(replyQuote);
 	}
 
 	public void showReplyDialog(String content) {
-		View view = LayoutInflater.from(this).inflate(R.layout.reply_dialog,
-				null);
+		View view = LayoutInflater.from(getSherlockActivity()).inflate(
+				R.layout.reply_dialog, null);
 		final EditText contentText = (EditText) view
 				.findViewById(R.id.replyText);
 		contentText.setText(content);
 		contentText.setSelection(content.length()); // 定位光标到文本框末尾
-		new AlertDialog.Builder(this).setView(view).setTitle(mSubject)
+		new AlertDialog.Builder(getSherlockActivity()).setView(view)
+				.setTitle(getArguments().getString("subject"))
 				.setNegativeButton("取消", new OnClickListener() {
 
 					@Override
@@ -198,121 +115,65 @@ public class PostActivity extends SherlockFragmentActivity {
 				}).show();
 	}
 
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		switch (item.getItemId()) {
-		case android.R.id.home:
-			this.finish();
-			break;
-		case R.id.menu_refresh:
-			fetchPosts();
-			break;
-		case R.id.menu_next:
-			mFrom += STEP;
-			fetchPosts();
-			break;
-		case R.id.menu_prev:
-			mFrom -= STEP;
-			if (mFrom <= 0)
-				mFrom = 0;
-			fetchPosts();
-			break;
-		case R.id.menu_post:
-			showReplyDialog("");
-			break;
-		default:
-			break;
-		}
-		return super.onOptionsItemSelected(item);
-	}
-
-	public void fetchPosts() {
-		new FetchPostsTask().execute();
-	}
-
-	class FetchPostsTask extends AsyncTask<Void, Void, Result> {
-		ArrayList<BuPost> posts = new ArrayList<BuPost>();
-
-		@Override
-		protected void onPreExecute() {
-			// pBar.setVisibility(View.VISIBLE);
-			super.onPreExecute();
-			posts.clear();
-		}
-
-		@Override
-		protected Result doInBackground(Void... params) {
-			return MainActivity.api.getPosts(posts, mTid, mFrom, mFrom + STEP);
-		}
-
-		@Override
-		protected void onPostExecute(Result result) {
-			switch (result) {
-			case SUCCESS:
-				mData.clear();
-				for (int i = 0; i < posts.size(); i++) {
-					mData.add(posts.get(i));
-				}
-				mAdapter.notifyDataSetChanged();
-				// 自动滚动到顶端显示
-				mListView.setSelection(0);
-				break;
-			case SUCCESS_EMPTY:
-				mFrom -= STEP;
-				showToast("没有数据");
-				break;
-			case FAILURE:
-				showToast("获取session失败");
-				break;
-			case NETWRONG:
-				showToast("网络错误");
-				break;
-			default:
-				showToast("未知错误");
-				break;
-			}
-		}
-	}
-
-	void showToast(String str) {
-		Toast.makeText(this, str, Toast.LENGTH_SHORT).show();
-	}
-
 	public class ReplyTask extends AsyncTask<String, Void, Result> {
 
 		@Override
 		protected Result doInBackground(String... arg0) {
-			return MainActivity.api.replyThread(mTid, arg0[0]);
+			return MainActivity.api.replyThread(
+					getArguments().getString("tid"), arg0[0]);
 		}
 
 		@Override
 		protected void onPostExecute(Result result) {
-			new FetchPostsTask().execute();
+			fetchContents();
 		}
 	}
 
-	class ListAdapter extends MainAdapter {
-		ArrayList<BuPost> data;
+	@Override
+	public Result fetchContentTask() {
+		String tid = PostFragment.this.getArguments().getString("tid");
+		return MainActivity.api.getPosts(mPosts, tid + "", mCurrentPageCnt,
+				mCurrentPageCnt + mPageStep);
+	}
+
+	class PostsAdapter extends MainAdapter {
+		ArrayList<BuPost> mData;
 		ViewHolder holder;
 
-		public ListAdapter(Context context, ArrayList<BuPost> data) {
+		public PostsAdapter(Context context, ArrayList<BuPost> data) {
 			super(context);
-			this.data = data;
+			this.mData = data;
+		}
+
+		@Override
+		public void clear() {
+			mData.clear();
+			notifyDataSetChanged();
 		}
 
 		@Override
 		public int getCount() {
-			return data.size();
+			return mData.size();
 		}
 
 		@Override
 		public Object getItem(int position) {
-			return data.get(position);
+			return mData.get(position);
 		}
 
 		@Override
 		public long getItemId(int position) {
 			return position;
+		}
+
+		@Override
+		public String getAuthor(int position) {
+			return ((BuPost) getItem(position)).author;
+		}
+
+		@Override
+		public String getAuthorID(int position) {
+			return ((BuPost) getItem(position)).authorid;
 		}
 
 		class ViewHolder {

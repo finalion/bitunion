@@ -2,65 +2,41 @@ package vleon.app.bitunion.fragment;
 
 import java.util.ArrayList;
 
+import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
+
+import com.actionbarsherlock.view.Menu;
+
 import vleon.app.bitunion.MainActivity;
 import vleon.app.bitunion.MainAdapter;
-import vleon.app.bitunion.PostActivity;
 import vleon.app.bitunion.R;
 import vleon.app.bitunion.api.BuAPI.Result;
+import vleon.app.bitunion.api.BuContent;
+import vleon.app.bitunion.api.BuPost;
 import vleon.app.bitunion.api.BuThread;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.v4.app.FragmentTransaction;
 import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.ViewGroup;
-import android.widget.AbsListView;
-import android.widget.AbsListView.OnScrollListener;
-import android.widget.AdapterView;
-import android.widget.AdapterView.OnItemLongClickListener;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
+import android.widget.EditText;
 
-import com.actionbarsherlock.app.SherlockListFragment;
-import com.actionbarsherlock.view.ActionMode;
-import com.actionbarsherlock.view.Menu;
-import com.actionbarsherlock.view.MenuInflater;
-import com.actionbarsherlock.view.MenuItem;
-
-public class ThreadFragment extends SherlockListFragment implements
-		OnScrollListener {
-	private ArrayList<BuThread> mData;
-	private ThreadsAdapter mAdapter;
-	private static int mFrom;
-	final int STEP = 20;
-	ActionMode mActionMode;
+public class ThreadFragment extends ContentFragment {
+	// private ArrayList<BuThread> mData;
 	int mActionItemPosition = -1;
-	MenuItem mRefreshItem;
-	int visibleItemCount, visibleLastIndex;
-	Button loadNextPageView = null;
+	ArrayList<BuThread> mThreads;
 
 	public static ThreadFragment newInstance(int fid) {
 		ThreadFragment fragment = new ThreadFragment();
-		mFrom = 0;
 		Bundle args = new Bundle();
 		args.putInt("fid", fid);
+		args.putInt("tag", THREAD);
 		fragment.setArguments(args);
 		return fragment;
-	}
-
-	@Override
-	public void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		setHasOptionsMenu(true);
 	}
 
 	@Override
@@ -72,177 +48,36 @@ public class ThreadFragment extends SherlockListFragment implements
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
-
-		/*
-		 * 长按事件触发时，如果不返回true，onListItemClick单击事件也会触发, 否则会一直分发事件直到触发单击
-		 */
-		getListView().setOnItemLongClickListener(new OnItemLongClickListener() {
-
-			@Override
-			public boolean onItemLongClick(AdapterView<?> arg0, View arg1,
-					int arg2, long arg3) {
-				mActionItemPosition = arg2;
-				if (mActionMode != null) {
-					// if already in action mode - do nothing
-					return false;
-				}
-				mAdapter.beginSelected();
-				mAdapter.addSelects(arg2);
-				mAdapter.notifyDataSetChanged();
-				mActionMode = getSherlockActivity().startActionMode(
-						new ActionModeCallback());
-				mActionMode.invalidate();
-				mActionMode.setTitle("已选择" + mAdapter.getSelectedCnt() + "帖");
-				return true;
-			}
-		});
-		View loadMoreView = LayoutInflater.from(getSherlockActivity()).inflate(
-				R.layout.loadmore, null);
-		getListView().addFooterView(loadMoreView, null, true);
-		getListView().setOnScrollListener(this);
-		loadNextPageView = (Button) loadMoreView
-				.findViewById(R.id.loadNextPageView);
-		loadNextPageView.setOnClickListener(new OnClickListener() {
-			
-			@Override
-			public void onClick(View v) {
-				fetchNextPage();
-			}
-		});
-		mData = new ArrayList<BuThread>();
-		mAdapter = new ThreadsAdapter(getActivity(), mData);
+		mThreads = new ArrayList<BuThread>();
+		mAdapter = new ThreadsAdapter(getSherlockActivity(), mThreads);
 		setListAdapter(mAdapter);
-		fetchThreads();
-	}
-
-	class ActionModeCallback implements ActionMode.Callback {
-
-		@Override
-		public boolean onCreateActionMode(ActionMode mode, Menu menu) {
-			MenuInflater inflater = mode.getMenuInflater();
-			inflater.inflate(R.menu.thread_context_menu, menu);
-			return true;
-		}
-
-		@Override
-		public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
-			// mode.getMenuInflater().inflate(R.menu.thread_context_menu, menu);
-			return true;
-		}
-
-		@Override
-		public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
-			switch (item.getItemId()) {
-			case R.id.menu_hide:
-				break;
-			case R.id.menu_top:
-				break;
-			case R.id.menu_profile:
-				BuThread t = (BuThread) mAdapter.getItem(Integer
-						.valueOf(mAdapter.getSelected().get(0)));
-				ProfileFragment fragment = ProfileFragment.newInstance(
-						t.authorid, t.author);
-				FragmentTransaction ft = getSherlockActivity()
-						.getSupportFragmentManager().beginTransaction();
-				fragment.show(ft, "作者信息");
-				break;
-			default:
-				break;
-			}
-			return true;
-		}
-
-		@Override
-		public void onDestroyActionMode(ActionMode mode) {
-			mActionMode = null;
-			mAdapter.endSelected();
-		}
-
-		public void disableProfileItem() {
-
-		}
+		fetchContents();
 	}
 
 	@Override
-	public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-		inflater.inflate(R.menu.thread, menu);
-		super.onCreateOptionsMenu(menu, inflater);
-	}
+	public void reply() {
+		final View view = LayoutInflater.from(getSherlockActivity()).inflate(
+				R.layout.newthread_dialog, null);
+		new AlertDialog.Builder(getSherlockActivity()).setView(view)
+				.setTitle("发表新帖")
+				.setNegativeButton("取消", new DialogInterface.OnClickListener() {
 
-	@Override
-	public void onPrepareOptionsMenu(Menu menu) {
-		super.onPrepareOptionsMenu(menu);
-	}
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
 
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		switch (item.getItemId()) {
-		case R.id.menu_post:
-			final View view = LayoutInflater.from(getSherlockActivity())
-					.inflate(R.layout.newthread_dialog, null);
-			new AlertDialog.Builder(getSherlockActivity()).setView(view)
-					.setTitle("发表新帖")
-					.setNegativeButton("取消", new DialogInterface.OnClickListener() {
+					}
+				})
+				.setPositiveButton("发表", new DialogInterface.OnClickListener() {
 
-						@Override
-						public void onClick(DialogInterface dialog, int which) {
-
-						}
-					}).setPositiveButton("发表", new DialogInterface.OnClickListener() {
-
-						@Override
-						public void onClick(DialogInterface dialog, int which) {
-							new NewThreadTask().execute(((EditText) view
-									.findViewById(R.id.newSubjectText))
-									.getText().toString(), ((EditText) view
-									.findViewById(R.id.newContentText))
-									.getText().toString());
-						}
-					}).show();
-		case R.id.menu_refresh:
-			mRefreshItem = item;
-			mRefreshItem.setActionView(R.layout.progress);
-			fetchThreads();
-			break;
-		case R.id.menu_next:
-			fetchNextPage();
-			break;
-		case R.id.menu_prev:
-			fetchPrevPage();
-		default:
-			break;
-		}
-		return super.onOptionsItemSelected(item);
-	}
-
-	@Override
-	public void onListItemClick(ListView l, View v, int position, long id) {
-		// TODO Auto-generated method stub
-		super.onListItemClick(l, v, position, id);
-		if (mActionMode != null) {
-			mAdapter.toggleSelected(position);
-			// mAdapter.notifyDataSetChanged();
-			mActionMode.setTitle("已选择" + mAdapter.getSelectedCnt() + "帖");
-			if (mAdapter.getSelectedCnt() > 1) {
-				mActionMode.getMenu().findItem(R.id.menu_profile)
-						.setVisible(false);
-			} else {
-				mActionMode.getMenu().findItem(R.id.menu_profile)
-						.setVisible(true);
-			}
-			if (mAdapter.getSelectedCnt() == 0) {
-				mActionMode.finish();
-			}
-		} else {
-			Intent intent = new Intent(getActivity(), PostActivity.class);
-			if (position != mAdapter.getCount()) {
-				BuThread thread = mData.get(position);
-				intent.putExtra("id", thread.tid);
-				intent.putExtra("subject", thread.subject);
-				startActivity(intent);
-			}
-		}
-
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						new NewThreadTask().execute(((EditText) view
+								.findViewById(R.id.newSubjectText)).getText()
+								.toString(), ((EditText) view
+								.findViewById(R.id.newContentText)).getText()
+								.toString());
+					}
+				}).show();
 	}
 
 	public class NewThreadTask extends AsyncTask<String, Void, Result> {
@@ -252,79 +87,50 @@ public class ThreadFragment extends SherlockListFragment implements
 			return MainActivity.api.postThread(getArguments().getInt("fid"),
 					arg0[0], arg0[1]);
 		}
-
 		@Override
 		protected void onPostExecute(Result result) {
-			fetchThreads();
+			fetchContents();
 		}
 	}
 
-	public class FetchThreadsTask extends AsyncTask<Void, Void, Result> {
-		ArrayList<BuThread> threads = new ArrayList<BuThread>();
-
-		@Override
-		protected void onPreExecute() {
-			super.onPreExecute();
-			threads.clear();
-		}
-
-		@Override
-		protected Result doInBackground(Void... params) {
-			int fid = ThreadFragment.this.getArguments().getInt("fid");
-			return MainActivity.api.getThreads(threads, fid, mFrom, mFrom
-					+ STEP);
-		}
-
-		@Override
-		protected void onPostExecute(Result result) {
-			if (mRefreshItem != null && mRefreshItem.getActionView() != null) {
-				mRefreshItem.setActionView(null);
-			}
-			switch (result) {
-			case SUCCESS:
-				mData.clear();
-				for (int i = 0; i < threads.size(); i++) {
-					mData.add(threads.get(i));
-				}
-				mAdapter.notifyDataSetChanged();
-				// 自动滚动到顶端显示
-				ThreadFragment.this.setSelection(0);
-				break;
-			case SUCCESS_EMPTY:
-				mFrom -= STEP;
-				showToast("没有数据");
-				break;
-			case FAILURE:
-				showToast("获取session失败");
-				break;
-			case NETWRONG:
-				showToast("网络错误");
-				break;
-			default:
-				showToast("未知错误");
-				break;
-			}
-		}
+	@Override
+	public Result fetchContentTask() {
+		int fid = ThreadFragment.this.getArguments().getInt("fid");
+		return MainActivity.api.getThreads(mThreads, fid, mCurrentPageCnt,
+				mCurrentPageCnt + mPageStep);
 	}
 
 	class ThreadsAdapter extends MainAdapter {
-		ArrayList<BuThread> threads;
+		public ArrayList<BuThread> mData;
+
+		ViewHolder holder;
 
 		public ThreadsAdapter(Context context, ArrayList<BuThread> threads) {
 			super(context);
-			this.threads = threads;
+			this.mData = threads;
+			holder = new ViewHolder();
+		}
+
+		class ViewHolder {
+			TextView flagView, subjectView, authorView, countsView,
+					lastpostView;
 		}
 
 		@Override
+		public void clear() {
+			mData.clear();
+			notifyDataSetChanged();
+		}
+		@Override
 		public int getCount() {
 			// TODO Auto-generated method stub
-			return threads.size();
+			return mData.size();
 		}
 
 		@Override
 		public Object getItem(int position) {
 			// TODO Auto-generated method stub
-			return threads.get(position);
+			return mData.get(position);
 		}
 
 		@Override
@@ -333,9 +139,14 @@ public class ThreadFragment extends SherlockListFragment implements
 			return position;
 		}
 
-		class ViewHolder {
-			TextView flagView, subjectView, authorView, countsView,
-					lastpostView;
+		@Override
+		public String getAuthor(int position) {
+			return ((BuThread) getItem(position)).author;
+		}
+
+		@Override
+		public String getAuthorID(int position) {
+			return ((BuThread) getItem(position)).authorid;
 		}
 
 		@Override
@@ -381,42 +192,4 @@ public class ThreadFragment extends SherlockListFragment implements
 		}
 	}
 
-
-	void fetchNextPage() {
-		mFrom += STEP;
-		fetchThreads();
-	}
-
-	void fetchPrevPage() {
-		mFrom -= STEP;
-		if (mFrom <= 0)
-			mFrom = 0;
-		fetchThreads();
-	}
-
-	void fetchThreads() {
-		new FetchThreadsTask().execute();
-	}
-
-	void showToast(String str) {
-		Toast.makeText(getSherlockActivity(), str, Toast.LENGTH_SHORT).show();
-	}
-
-	@Override
-	public void onScroll(AbsListView view, int firstVisibleItem,
-			int visibleItemCount, int totalItemCount) {
-		this.visibleItemCount = visibleItemCount;
-		visibleLastIndex = firstVisibleItem + visibleItemCount - 1;
-	}
-
-	@Override
-	public void onScrollStateChanged(AbsListView view, int scrollState) {
-		int itemsLastIndex = mAdapter.getCount() - 1; // 数据集最后一项的索引
-		int lastIndex = itemsLastIndex + 1; // 加上底部的loadMoreView项
-		if (scrollState == OnScrollListener.SCROLL_STATE_IDLE
-				&& visibleLastIndex == lastIndex) {
-			// 如果是自动加载,可以在这里放置异步加载数据的代码
-			// Log.i("LOADMORE", "loading...");
-		}
-	}
 }

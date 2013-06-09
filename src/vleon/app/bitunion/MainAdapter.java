@@ -2,20 +2,25 @@ package vleon.app.bitunion;
 
 import java.util.ArrayList;
 
+import vleon.app.bitunion.api.BuContent;
+import vleon.app.bitunion.api.BuThread;
+
 import android.content.Context;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 
 public class MainAdapter extends BaseAdapter {
-
+	// public ArrayList<Object> mData;
 	public Context mContext;
 	public ArrayList<Integer> mSelectedIndexs;
 	public boolean mSelected;
+
 	public MainAdapter(Context context) {
 		this.mContext = context;
 		mSelectedIndexs = new ArrayList<Integer>();
 	}
+
 	public void addSelects(int position) {
 		mSelectedIndexs.add(Integer.valueOf(position));
 	}
@@ -44,8 +49,8 @@ public class MainAdapter extends BaseAdapter {
 		mSelectedIndexs.clear();
 		notifyDataSetChanged();
 	}
-	
-	public ArrayList<Integer> getSelected(){
+
+	public ArrayList<Integer> getSelected() {
 		return mSelectedIndexs;
 	}
 
@@ -71,6 +76,19 @@ public class MainAdapter extends BaseAdapter {
 	public View getView(int position, View convertView, ViewGroup parent) {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	public String getAuthor(int position) {
+		return "";
+	}
+
+	public String getAuthorID(int position) {
+		return "";
+	}
+
+	public void clear() {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

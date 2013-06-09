@@ -3,21 +3,29 @@
     <item
         android:id="@+id/menu_hide"
         android:icon="@drawable/content_discard"
-        android:orderInCategory="1"
+        android:orderInCategory="0"
         android:showAsAction="ifRoom"
         android:title="隐藏">
     </item>
     <item
         android:id="@+id/menu_top"
         android:icon="@drawable/content_merge"
-        android:orderInCategory="0"
+        android:orderInCategory="1"
         android:showAsAction="ifRoom"
         android:title="置顶">
     </item>
     <item
+        android:id="@+id/menu_quotereply"
+        android:icon="@drawable/social_reply"
+        android:orderInCategory="2"
+        android:showAsAction="ifRoom"
+        android:visible="false"
+        android:title="引用">
+    </item>
+    <item
         android:id="@+id/menu_profile"
         android:icon="@drawable/person"
-        android:orderInCategory="2"
+        android:orderInCategory="3"
         android:showAsAction="always"
         android:title="资料">
     </item>

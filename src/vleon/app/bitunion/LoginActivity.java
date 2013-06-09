@@ -48,8 +48,6 @@ public class LoginActivity extends SherlockActivity {
 		loginButton = (Button) findViewById(R.id.loginButton);
 		autologinCheck = (CheckBox) findViewById(R.id.autologinCheck);
 		netGroup = (RadioGroup) findViewById(R.id.radioGroup1);
-		usernameText.setText("vleon");
-		passwordText.setText("fengliang20701159");
 		netGroup.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
@@ -71,16 +69,6 @@ public class LoginActivity extends SherlockActivity {
 						passwordText.getText().toString());
 				api.setNetType(netType);
 				new LoginTask().execute();
-				// Intent intent = new Intent(LoginActivity.this,
-				// MainActivity.class);
-				// intent.putExtra("autologin", autologinCheck.isChecked());
-				// intent.putExtra("username",
-				// usernameText.getText().toString());
-				// intent.putExtra("password",
-				// passwordText.getText().toString());
-				// intent.putExtra("nettype", netType);
-				// setResult(RESULT_OK, intent);
-				// finish();
 			}
 		});
 	}
@@ -121,7 +109,6 @@ public class LoginActivity extends SherlockActivity {
 			intent.putExtra("nettype", netType);
 			startActivity(intent);
 			finish();
-			overridePendingTransition(0, 0);
 		}
 	}
 

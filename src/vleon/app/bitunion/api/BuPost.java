@@ -6,7 +6,7 @@ import java.util.regex.Pattern;
 
 import org.json.JSONObject;
 
-public class BuPost {
+public class BuPost extends BuContent{
 
 	public String pid, fid, tid, aid, icon;
 	public String content;

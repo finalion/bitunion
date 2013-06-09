@@ -1,6 +1,6 @@
 package vleon.app.bitunion.api;
 
-public class BuForum {
+public class BuForum extends BuContent{
 	private String name;
 	private int fid;
 	private int type;

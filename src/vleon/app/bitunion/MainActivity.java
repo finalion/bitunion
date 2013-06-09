@@ -4,14 +4,19 @@ import java.util.ArrayList;
 import vleon.app.bitunion.api.BuAPI;
 import vleon.app.bitunion.api.BuAPI.Result;
 import vleon.app.bitunion.api.BuForum;
+import vleon.app.bitunion.api.BuThread;
+import vleon.app.bitunion.fragment.ContentFragment.OnContentItemClickListener;
 import vleon.app.bitunion.fragment.MenuFragment;
 import vleon.app.bitunion.fragment.MenuFragment.OnForumSelectedListener;
+import vleon.app.bitunion.fragment.ContentFragment;
+import vleon.app.bitunion.fragment.PostFragment;
 import vleon.app.bitunion.fragment.ThreadFragment;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.app.NavUtils;
 import android.view.View;
 import android.widget.AbsListView;
 import android.widget.Toast;
@@ -23,8 +28,8 @@ import com.slidingmenu.lib.SlidingMenu;
 import com.slidingmenu.lib.app.SlidingFragmentActivity;
 
 public class MainActivity extends SlidingFragmentActivity implements
-		OnForumSelectedListener {
-
+		OnForumSelectedListener, OnContentItemClickListener {
+	FragmentManager mFragManager = getSupportFragmentManager();
 	ArrayList<BuForum> mForumList = new ArrayList<BuForum>();
 	ArrayList<ThreadFragment> mFragmentList = new ArrayList<ThreadFragment>();
 	ThreadFragment mCurrentFragment = null;
@@ -81,18 +86,18 @@ public class MainActivity extends SlidingFragmentActivity implements
 	}
 
 	public void showForum(int fid, String tag) {
-		FragmentManager manager = getSupportFragmentManager();
-		FragmentTransaction transaction = manager.beginTransaction();
+		
+		FragmentTransaction transaction = mFragManager.beginTransaction();
 		if (mCurrentFragment != null) {
 			transaction.hide(mCurrentFragment);
 		}
-		ThreadFragment toShowFragment = (ThreadFragment) manager
+		ThreadFragment toShowFragment = (ThreadFragment) mFragManager
 				.findFragmentByTag(tag);
 		if (toShowFragment != null) {
 			transaction.show(toShowFragment);
 		} else {
 			toShowFragment = ThreadFragment.newInstance(fid);
-			transaction.add(R.id.threadsFragment, toShowFragment, tag);
+			transaction.add(R.id.contentFragment, toShowFragment, tag);
 		}
 		transaction.commit();
 		setTitle(tag); // getText(R.string.app_name) + "" +
@@ -170,6 +175,18 @@ public class MainActivity extends SlidingFragmentActivity implements
 	public void onForumSelected(int fid, String name) {
 		getSlidingMenu().showContent();
 		showForum(fid, name);
+	}
+
+	@Override
+	public void onItemClicked(int position) {
+		BuThread thread = (BuThread) mCurrentFragment.mAdapter.getItem(position);
+		PostFragment fragment = PostFragment.newInstance(thread.tid,thread.subject);
+		FragmentTransaction transaction = mFragManager.beginTransaction();
+		transaction.hide(mCurrentFragment);
+		transaction.add(R.id.contentFragment, fragment, null);
+		transaction.addToBackStack(null);
+		transaction.commit();
+
 	}
 
 	
