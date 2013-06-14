@@ -118,8 +118,10 @@ public class ContentFragment extends SherlockListFragment implements
 		mRefreshItem = menu.findItem(R.id.menu_refresh);
 	}
 
-	public void reply() {
-
+	public void refresh() {
+		mCurrentPageCnt = 0;
+		mAdapter.clear();
+		fetchContents();
 	}
 
 	/*
@@ -133,10 +135,9 @@ public class ContentFragment extends SherlockListFragment implements
 		switch (item.getItemId()) {
 		case R.id.menu_post:
 			reply();
+			break;
 		case R.id.menu_refresh:
-			mCurrentPageCnt = 0;
-			mAdapter.clear();
-			fetchContents();
+			refresh();
 			break;
 		default:
 			break;
@@ -155,8 +156,7 @@ public class ContentFragment extends SherlockListFragment implements
 
 		@Override
 		public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
-			int tag = getArguments().getInt("tag");
-			if (tag == POST) {
+			if (getThisTag() == POST) {
 				menu.findItem(R.id.menu_quotereply).setVisible(true);
 			}
 			return true;
@@ -201,10 +201,18 @@ public class ContentFragment extends SherlockListFragment implements
 	}
 
 	public class FetchContentTask extends AsyncTask<Void, Void, Result> {
+		int currentAdapterCount = 0;
+
 		@Override
 		protected void onPreExecute() {
 			super.onPreExecute();
 			setRefreshActionViewState(true);
+			currentAdapterCount = mAdapter.getCount();
+			if (mAdapter.getCount() < mPageStep) {
+				loadNextPageView.setVisibility(View.GONE);
+			}else {
+				loadNextPageView.setVisibility(View.VISIBLE);
+			}
 		}
 
 		@Override
@@ -216,11 +224,15 @@ public class ContentFragment extends SherlockListFragment implements
 		@Override
 		protected void onPostExecute(Result result) {
 			loadNextPageView.setText("");
+			if (mAdapter.getCount() - currentAdapterCount < mPageStep) {
+				loadNextPageView.setVisibility(View.GONE);
+			}else {
+				loadNextPageView.setVisibility(View.VISIBLE);
+			}
 			setRefreshActionViewState(false);
 			switch (result) {
 			case SUCCESS:
 				mAdapter.notifyDataSetChanged();
-
 				break;
 			case SUCCESS_EMPTY:
 				mCurrentPageCnt -= mPageStep;
@@ -259,7 +271,7 @@ public class ContentFragment extends SherlockListFragment implements
 				mActionMode.finish();
 			}
 		} else {
-			if (getArguments().getInt("tag") == THREAD) {
+			if (getThisTag() == THREAD) {
 				mItemClickListener.onItemClicked(position);
 			}
 		}
@@ -283,18 +295,15 @@ public class ContentFragment extends SherlockListFragment implements
 		}
 	}
 
-	public void setRefreshActionViewState(boolean refreshing) {
-		if (mRefreshItem == null)
-			return;
-		if (refreshing) {
-			mRefreshItem.setActionView(R.layout.progress);
-		} else {
-			mRefreshItem.setActionView(null);
-		}
+	/*
+	 * “回复”菜单项，供子类重写
+	 */
+	public void reply() {
+
 	}
 
 	/*
-	 * 获取内容
+	 * 获取页面内容
 	 */
 	public void fetchContents() {
 		new FetchContentTask().execute();
@@ -305,8 +314,35 @@ public class ContentFragment extends SherlockListFragment implements
 		fetchContents();
 	}
 
+	public void fetchPrevPage() {
+		mCurrentPageCnt -= mPageStep;
+		if (mCurrentPageCnt < 0)
+			mCurrentPageCnt = 0;
+		fetchContents();
+	}
+
 	void showToast(String str) {
 		Toast.makeText(getSherlockActivity(), str, Toast.LENGTH_SHORT).show();
+	}
+
+	/*
+	 * 获取当前fragment类型
+	 */
+	public int getThisTag() {
+		return getArguments().getInt("tag");
+	}
+
+	/*
+	 * 设定“刷新”菜单项的actionview
+	 */
+	public void setRefreshActionViewState(boolean refreshing) {
+		if (mRefreshItem == null)
+			return;
+		if (refreshing) {
+			mRefreshItem.setActionView(R.layout.progress);
+		} else {
+			mRefreshItem.setActionView(null);
+		}
 	}
 
 }

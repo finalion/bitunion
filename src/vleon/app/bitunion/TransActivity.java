@@ -57,4 +57,6 @@ public class TransActivity extends SherlockActivity {
 		mPassword = config.getString("password", null);
 		mAutoLogin = config.getBoolean("autologin", false);
 	}
+	
+
 }

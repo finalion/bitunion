@@ -1,6 +1,7 @@
 package vleon.app.bitunion;
 
 import java.util.ArrayList;
+
 import vleon.app.bitunion.api.BuAPI;
 import vleon.app.bitunion.api.BuAPI.Result;
 import vleon.app.bitunion.api.BuForum;
@@ -12,15 +13,15 @@ import vleon.app.bitunion.fragment.ContentFragment;
 import vleon.app.bitunion.fragment.PostFragment;
 import vleon.app.bitunion.fragment.ThreadFragment;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentManager.BackStackEntry;
 import android.support.v4.app.FragmentTransaction;
-import android.support.v4.app.NavUtils;
-import android.view.View;
-import android.widget.AbsListView;
+import android.view.KeyEvent;
 import android.widget.Toast;
-import android.widget.AbsListView.OnScrollListener;
 
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
@@ -32,16 +33,15 @@ public class MainActivity extends SlidingFragmentActivity implements
 	FragmentManager mFragManager = getSupportFragmentManager();
 	ArrayList<BuForum> mForumList = new ArrayList<BuForum>();
 	ArrayList<ThreadFragment> mFragmentList = new ArrayList<ThreadFragment>();
-	ThreadFragment mCurrentFragment = null;
+	ContentFragment mCurrentThreadFragment = null;
 
+	long lastExitTime = 0;
 	private int mStartFid = 14;
 	public static BuAPI api;
 
 	String mUsername, mPassword;
 	boolean mAutoLogin;
 	int mNetType;
-
-	final int LOGIN_REQUEST_CODE = 11111;
 
 	public void setSideMenu() {
 		// set the Behind View
@@ -82,17 +82,22 @@ public class MainActivity extends SlidingFragmentActivity implements
 	@Override
 	protected void onPause() {
 		super.onPause();
-		// saveConfig();
+		saveNetType();
 	}
 
 	public void showForum(int fid, String tag) {
-		
 		FragmentTransaction transaction = mFragManager.beginTransaction();
-		if (mCurrentFragment != null) {
-			transaction.hide(mCurrentFragment);
-		}
 		ThreadFragment toShowFragment = (ThreadFragment) mFragManager
 				.findFragmentByTag(tag);
+		if (mCurrentThreadFragment != null) {
+			transaction.hide(mCurrentThreadFragment);
+			// if (mCurrentThreadFragment.getTag().equals("post")) {
+			// transaction.remove(mCurrentThreadFragment);
+			// }
+		}
+		if(showingPostFragment()){
+			transaction.remove(mFragManager.findFragmentByTag("post"));
+		}
 		if (toShowFragment != null) {
 			transaction.show(toShowFragment);
 		} else {
@@ -101,16 +106,21 @@ public class MainActivity extends SlidingFragmentActivity implements
 		}
 		transaction.commit();
 		setTitle(tag); // getText(R.string.app_name) + "" +
-		mCurrentFragment = toShowFragment;
+		mCurrentThreadFragment = toShowFragment;
 	}
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-//		if(android.os.Build.VERSION.SDK_INT<11)
+		// if(android.os.Build.VERSION.SDK_INT<11)
 		switch (item.getItemId()) {
 		case android.R.id.home:
-			toggle();
-			return true;
+			Fragment fragment = mFragManager.findFragmentByTag("post");
+			if (fragment == null) {
+				toggle();
+			} else {
+				onBackPressed();
+			}
+			break;
 		case R.id.menu_switchnet:
 			if (api.getNetType() == BuAPI.BITNET) {
 				api.setNetType(BuAPI.OUTNET);
@@ -140,7 +150,6 @@ public class MainActivity extends SlidingFragmentActivity implements
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-		// getSupportMenuInflater().inflate(R.menu.main, menu);
 		getSupportMenuInflater().inflate(R.menu.main, menu);
 		return true;
 	}
@@ -180,15 +189,58 @@ public class MainActivity extends SlidingFragmentActivity implements
 
 	@Override
 	public void onItemClicked(int position) {
-		BuThread thread = (BuThread) mCurrentFragment.mAdapter.getItem(position);
-		PostFragment fragment = PostFragment.newInstance(thread.tid,thread.subject);
+		BuThread thread = (BuThread) mCurrentThreadFragment.mAdapter
+				.getItem(position);
+		PostFragment fragment = PostFragment.newInstance(thread.tid,
+				thread.subject);
 		FragmentTransaction transaction = mFragManager.beginTransaction();
-		transaction.hide(mCurrentFragment);
-		transaction.add(R.id.contentFragment, fragment, null);
-		transaction.addToBackStack(null);
+		transaction.hide(mCurrentThreadFragment);
+		transaction.add(R.id.contentFragment, fragment, "post");
+		transaction.addToBackStack(thread.tid+"");
 		transaction.commit();
-
 	}
 
-	
+	public Fragment getBackStackTopFragment() {
+		int backStackCount = mFragManager.getBackStackEntryCount();
+		if (backStackCount == 0) {
+			return null;
+		}
+		BackStackEntry backStackEntry = mFragManager
+				.getBackStackEntryAt(backStackCount - 1);
+		String fragName = backStackEntry.getName();
+		return mFragManager.findFragmentByTag(fragName);
+	}
+
+	public boolean showingPostFragment() {
+		Fragment fragment = mFragManager.findFragmentByTag("post");
+		return (fragment == null) ? false : true;
+	}
+
+	/*
+	 * 按两次返回键退出程序
+	 */
+	@Override
+	public boolean onKeyDown(int keyCode, KeyEvent event) {
+		if (!showingPostFragment() && keyCode == KeyEvent.KEYCODE_BACK
+				&& event.getAction() == KeyEvent.ACTION_DOWN) {
+			if (System.currentTimeMillis() - lastExitTime > 2000) {
+				Toast.makeText(this, "再按一次退出程序", Toast.LENGTH_SHORT).show();
+				lastExitTime = System.currentTimeMillis();
+			} else {
+				finish();
+			}
+			return true;
+		}
+		return super.onKeyDown(keyCode, event);
+	}
+
+	/*
+	 * 保存网络登录类型，下次启动使用
+	 */
+	public void saveNetType() {
+		SharedPreferences config = getSharedPreferences("config", MODE_PRIVATE);
+		SharedPreferences.Editor editor = config.edit();
+		editor.putInt("nettype", api.getNetType());
+		editor.commit();
+	}
 }
