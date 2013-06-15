@@ -12,6 +12,7 @@ import vleon.app.bitunion.fragment.MenuFragment.OnForumSelectedListener;
 import vleon.app.bitunion.fragment.ContentFragment;
 import vleon.app.bitunion.fragment.PostFragment;
 import vleon.app.bitunion.fragment.ThreadFragment;
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
@@ -34,7 +35,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 	ArrayList<BuForum> mForumList = new ArrayList<BuForum>();
 	ArrayList<ThreadFragment> mFragmentList = new ArrayList<ThreadFragment>();
 	ContentFragment mCurrentThreadFragment = null;
-
+	private MenuItem mRefreshItem;
 	long lastExitTime = 0;
 	private int mStartFid = 14;
 	public static BuAPI api;
@@ -95,7 +96,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 			// transaction.remove(mCurrentThreadFragment);
 			// }
 		}
-		if(showingPostFragment()){
+		if (showingPostFragment()) {
 			transaction.remove(mFragManager.findFragmentByTag("post"));
 		}
 		if (toShowFragment != null) {
@@ -121,6 +122,9 @@ public class MainActivity extends SlidingFragmentActivity implements
 				onBackPressed();
 			}
 			break;
+		case R.id.menu_refresh:
+			((ContentFragment) getCurrentFragment()).refresh();
+			break;
 		case R.id.menu_switchnet:
 			if (api.getNetType() == BuAPI.BITNET) {
 				api.setNetType(BuAPI.OUTNET);
@@ -133,12 +137,16 @@ public class MainActivity extends SlidingFragmentActivity implements
 			startActivity(new Intent(MainActivity.this, LoginActivity.class));
 			finish();
 			break;
+		case R.id.menu_about:
+			new AlertDialog.Builder(this).setMessage("项目地址: https://github.com/finalion/bitunion \n\n开发者: vleon, somebody ").setTitle("关于").show();
+			break;
 		}
 		return super.onOptionsItemSelected(item);
 	}
 
 	@Override
 	public boolean onPrepareOptionsMenu(Menu menu) {
+		mRefreshItem = menu.findItem(R.id.menu_refresh);
 		MenuItem switchItem = menu.findItem(R.id.menu_switchnet);
 		if (api.getNetType() == BuAPI.BITNET) {
 			switchItem.setTitle("切换网络至外网");
@@ -196,7 +204,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 		FragmentTransaction transaction = mFragManager.beginTransaction();
 		transaction.hide(mCurrentThreadFragment);
 		transaction.add(R.id.contentFragment, fragment, "post");
-		transaction.addToBackStack(thread.tid+"");
+		transaction.addToBackStack(thread.tid + "");
 		transaction.commit();
 	}
 
@@ -214,6 +222,14 @@ public class MainActivity extends SlidingFragmentActivity implements
 	public boolean showingPostFragment() {
 		Fragment fragment = mFragManager.findFragmentByTag("post");
 		return (fragment == null) ? false : true;
+	}
+
+	public Fragment getCurrentFragment() {
+		Fragment fragment = mFragManager.findFragmentByTag("post");
+		if (fragment != null) {
+			return fragment;
+		}
+		return mCurrentThreadFragment;
 	}
 
 	/*
@@ -242,5 +258,9 @@ public class MainActivity extends SlidingFragmentActivity implements
 		SharedPreferences.Editor editor = config.edit();
 		editor.putInt("nettype", api.getNetType());
 		editor.commit();
+	}
+
+	public MenuItem getRefreshItem() {
+		return mRefreshItem;
 	}
 }

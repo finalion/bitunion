@@ -4,22 +4,16 @@ import vleon.app.bitunion.MainActivity;
 import vleon.app.bitunion.MainAdapter;
 import vleon.app.bitunion.R;
 import vleon.app.bitunion.api.BuAPI.Result;
-import vleon.app.bitunion.api.BuThread;
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.FragmentTransaction;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.View.OnClickListener;
-import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.AbsListView.OnScrollListener;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemLongClickListener;
-import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -43,7 +37,6 @@ public class ContentFragment extends SherlockListFragment implements
 	int mActionItemPosition;
 	private int visibleItemCount;
 	private int visibleLastIndex;
-	private MenuItem mRefreshItem;
 	View loadMoreView;
 
 	/*
@@ -73,7 +66,6 @@ public class ContentFragment extends SherlockListFragment implements
 				}
 				mActionItemPosition = arg2;
 				if (mActionMode != null) {
-					// if already in action mode - do nothing
 					return false;
 				}
 				mAdapter.beginSelected();
@@ -109,13 +101,7 @@ public class ContentFragment extends SherlockListFragment implements
 	@Override
 	public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
 		inflater.inflate(R.menu.thread, menu);
-		super.onCreateOptionsMenu(menu, inflater);
-	}
-
-	@Override
-	public void onPrepareOptionsMenu(Menu menu) {
-		super.onPrepareOptionsMenu(menu);
-		mRefreshItem = menu.findItem(R.id.menu_refresh);
+		// super.onCreateOptionsMenu(menu, inflater);
 	}
 
 	public void refresh() {
@@ -136,9 +122,9 @@ public class ContentFragment extends SherlockListFragment implements
 		case R.id.menu_post:
 			reply();
 			break;
-		case R.id.menu_refresh:
-			refresh();
-			break;
+		// case R.id.menu_refresh:
+		// refresh();
+		// break;
 		default:
 			break;
 		}
@@ -209,8 +195,8 @@ public class ContentFragment extends SherlockListFragment implements
 			setRefreshActionViewState(true);
 			currentAdapterCount = mAdapter.getCount();
 			if (mAdapter.getCount() < mPageStep) {
-				loadNextPageView.setVisibility(View.GONE);
-			}else {
+				loadNextPageView.setVisibility(View.INVISIBLE);
+			} else {
 				loadNextPageView.setVisibility(View.VISIBLE);
 			}
 		}
@@ -225,8 +211,8 @@ public class ContentFragment extends SherlockListFragment implements
 		protected void onPostExecute(Result result) {
 			loadNextPageView.setText("");
 			if (mAdapter.getCount() - currentAdapterCount < mPageStep) {
-				loadNextPageView.setVisibility(View.GONE);
-			}else {
+				loadNextPageView.setVisibility(View.INVISIBLE);
+			} else {
 				loadNextPageView.setVisibility(View.VISIBLE);
 			}
 			setRefreshActionViewState(false);
@@ -336,13 +322,21 @@ public class ContentFragment extends SherlockListFragment implements
 	 * 设定“刷新”菜单项的actionview
 	 */
 	public void setRefreshActionViewState(boolean refreshing) {
-		if (mRefreshItem == null)
+		MenuItem refreshItem = getRefreshItem();
+		if (refreshItem == null)
 			return;
 		if (refreshing) {
-			mRefreshItem.setActionView(R.layout.progress);
+			refreshItem.setActionView(R.layout.progress);
 		} else {
-			mRefreshItem.setActionView(null);
+			refreshItem.setActionView(null);
 		}
 	}
 
+	public MainActivity getThisActivity() {
+		return (MainActivity) getSherlockActivity();
+	}
+
+	public MenuItem getRefreshItem() {
+		return getThisActivity().getRefreshItem();
+	}
 }

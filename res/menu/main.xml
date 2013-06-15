@@ -1,12 +1,12 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android" >
 
-<!--     <item
+    <item
         android:id="@+id/menu_refresh"
         android:icon="@drawable/navigation_refresh"
         android:orderInCategory="1"
         android:showAsAction="always"
         android:title="刷新">
-    </item> -->
+    </item>
     <!--
          <item
         android:id="@+id/menu_prev"
@@ -21,7 +21,7 @@
         android:orderInCategory="2"
         android:showAsAction="ifRoom"
         android:title="下页">
-    </item>
+    </item>
     -->
     <item
         android:id="@+id/menu_switchnet"
@@ -33,5 +33,10 @@
         android:orderInCategory="101"
         android:showAsAction="never"
         android:title="注销"/>
+    <item
+        android:id="@+id/menu_about"
+        android:orderInCategory="101"
+        android:showAsAction="never"
+        android:title="关于"/>
 
 </menu>

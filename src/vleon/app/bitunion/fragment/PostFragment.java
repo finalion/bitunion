@@ -66,7 +66,7 @@ public class PostFragment extends ContentFragment {
 
 	@Override
 	public void onPrepareOptionsMenu(Menu menu) {
-		super.onPrepareOptionsMenu(menu);
+//		super.onPrepareOptionsMenu(menu);
 		menu.findItem(R.id.menu_post).setIcon(R.drawable.social_reply);
 		menu.findItem(R.id.menu_post).setTitle("»Ø¸´");
 	}
