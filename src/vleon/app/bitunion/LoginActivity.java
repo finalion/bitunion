@@ -12,6 +12,7 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.RadioGroup;
+import android.widget.RadioGroup.OnCheckedChangeListener;
 
 import com.actionbarsherlock.app.SherlockActivity;
 
@@ -30,17 +31,17 @@ public class LoginActivity extends SherlockActivity {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		readConfig();
-		// 如果读取保存的账户信息成功
-		if (mUsername != null && mPassword != null) {
-			// 如果打开了自动登录功能，则用保存的账号登录，直接跳转到主界面
-			if (mAutoLogin) {
-				api = new BuAPI(mUsername, mPassword);
-				api.setNetType(mNetType);
-				new LoginTask().execute();
-				return;
-			}
-		}
+//		readConfig();
+//		// 如果读取保存的账户信息成功
+//		if (mUsername != null && mPassword != null) {
+//			// 如果打开了自动登录功能，则用保存的账号登录，直接跳转到主界面
+//			if (mAutoLogin) {
+//				api = new BuAPI(mUsername, mPassword);
+//				api.setNetType(mNetType);
+//				new LoginTask().execute();
+//				return;
+//			}
+//		}
 		// 显示登录界面
 		setContentView(R.layout.activity_login);
 		usernameText = (EditText) findViewById(R.id.usernameText);
@@ -48,12 +49,13 @@ public class LoginActivity extends SherlockActivity {
 		loginButton = (Button) findViewById(R.id.loginButton);
 		autologinCheck = (CheckBox) findViewById(R.id.autologinCheck);
 		netGroup = (RadioGroup) findViewById(R.id.radioGroup1);
-		netGroup.setOnClickListener(new OnClickListener() {
+		netGroup.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+			
 			@Override
-			public void onClick(View v) {
-				if (v.getId() == R.id.innerNetButton) {
+			public void onCheckedChanged(RadioGroup arg0, int arg1) {
+				if (arg1 == R.id.innerNetButton) {
 					netType = BuAPI.BITNET;
-				} else if (v.getId() == R.id.outerNetButton) {
+				} else if (arg1 == R.id.outerNetButton) {
 					netType = BuAPI.OUTNET;
 				}
 			}

@@ -8,7 +8,12 @@ import android.app.Activity;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.app.ListFragment;
+import android.view.ActionMode;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AbsListView;
 import android.widget.AbsListView.OnScrollListener;
@@ -18,14 +23,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.actionbarsherlock.app.SherlockListFragment;
-import com.actionbarsherlock.view.ActionMode;
-import com.actionbarsherlock.view.Menu;
-import com.actionbarsherlock.view.MenuInflater;
-import com.actionbarsherlock.view.MenuItem;
-
-public class ContentFragment extends SherlockListFragment implements
-		OnScrollListener {
+public class ContentFragment extends ListFragment implements OnScrollListener {
 	public static final int THREAD = 0;
 	public static final int POST = 1;
 	OnContentItemClickListener mItemClickListener;
@@ -40,7 +38,7 @@ public class ContentFragment extends SherlockListFragment implements
 	View loadMoreView;
 
 	/*
-	 * ÁĞ±íÏîµã»÷¹¦ÄÜ½Ó¿Ú¶¨Òå
+	 * åˆ—è¡¨é¡¹ç‚¹å‡»åŠŸèƒ½æ¥å£å®šä¹‰
 	 */
 	public interface OnContentItemClickListener {
 		public void onItemClicked(int position);
@@ -60,7 +58,7 @@ public class ContentFragment extends SherlockListFragment implements
 			@Override
 			public boolean onItemLongClick(AdapterView<?> arg0, View arg1,
 					int arg2, long arg3) {
-				// ³¬³öË÷Òı¼´×îÏÂÃæµÄloadmoreview±»³¤°´£¬²»Ö´ĞĞ
+				// è¶…å‡ºç´¢å¼•å³æœ€ä¸‹é¢çš„loadmoreviewè¢«é•¿æŒ‰ï¼Œä¸æ‰§è¡Œ
 				if (arg2 >= mAdapter.getCount()) {
 					return false;
 				}
@@ -71,14 +69,14 @@ public class ContentFragment extends SherlockListFragment implements
 				mAdapter.beginSelected();
 				mAdapter.addSelects(arg2);
 				mAdapter.notifyDataSetChanged();
-				mActionMode = getSherlockActivity().startActionMode(
+				mActionMode = getActivity().startActionMode(
 						new ActionModeCallback());
 				mActionMode.invalidate();
-				mActionMode.setTitle("ÒÑÑ¡Ôñ" + mAdapter.getSelectedCnt() + "Ìû");
+				mActionMode.setTitle("å·²é€‰æ‹©" + mAdapter.getSelectedCnt() + "å¸–");
 				return true;
 			}
 		});
-		loadMoreView = LayoutInflater.from(getSherlockActivity()).inflate(
+		loadMoreView = LayoutInflater.from(getActivity()).inflate(
 				R.layout.loadmore, null);
 		loadNextPageView = (TextView) loadMoreView
 				.findViewById(R.id.loadNextPageView);
@@ -94,7 +92,7 @@ public class ContentFragment extends SherlockListFragment implements
 			mItemClickListener = (OnContentItemClickListener) activity;
 		} catch (ClassCastException e) {
 			throw new ClassCastException(activity.toString()
-					+ "±ØĞëÊµÏÖOnContentItemClickListener½Ó¿Ú");
+					+ "å¿…é¡»å®ç°OnContentItemClickListeneræ¥å£");
 		}
 	}
 
@@ -111,7 +109,7 @@ public class ContentFragment extends SherlockListFragment implements
 	}
 
 	/*
-	 * Ö»ĞèÒªPostFragmentÖØĞ´
+	 * åªéœ€è¦PostFragmenté‡å†™
 	 */
 	public void replyOthers() {
 	}
@@ -153,7 +151,7 @@ public class ContentFragment extends SherlockListFragment implements
 			switch (item.getItemId()) {
 			case R.id.menu_hide:
 			case R.id.menu_top:
-				showToast("¹¦ÄÜ»¹Î´ÒıÈë!");
+				showToast("åŠŸèƒ½è¿˜æœªå¼•å…¥!");
 				break;
 			case R.id.menu_quotereply:
 				replyOthers();
@@ -163,9 +161,9 @@ public class ContentFragment extends SherlockListFragment implements
 				int i = Integer.valueOf(mAdapter.getSelected().get(0));
 				ProfileFragment fragment = ProfileFragment.newInstance(
 						mAdapter.getAuthorID(i), mAdapter.getAuthor(i));
-				FragmentTransaction ft = getSherlockActivity()
+				FragmentTransaction ft = getActivity()
 						.getSupportFragmentManager().beginTransaction();
-				fragment.show(ft, "×÷ÕßĞÅÏ¢");
+				fragment.show(ft, "ä½œè€…ä¿¡æ¯");
 				mode.finish();
 				break;
 			default:
@@ -222,13 +220,13 @@ public class ContentFragment extends SherlockListFragment implements
 				break;
 			case SUCCESS_EMPTY:
 				mCurrentPageCnt -= mPageStep;
-				showToast("Ã»ÓĞÊı¾İ");
+				showToast("æ²¡æœ‰æ•°æ®");
 				break;
 			case FAILURE:
-				showToast("»ñÈ¡sessionÊ§°Ü");
+				showToast("è·å–sessionå¤±è´¥");
 				break;
 			case NETWRONG:
-				showToast("ÍøÂç´íÎó");
+				showToast("ç½‘ç»œé”™è¯¯");
 				break;
 			default:
 				break;
@@ -239,13 +237,13 @@ public class ContentFragment extends SherlockListFragment implements
 	@Override
 	public void onListItemClick(ListView l, View v, int position, long id) {
 		super.onListItemClick(l, v, position, id);
-		// ³¬³öË÷Òı¼´×îÏÂÃæµÄloadmoreview±»µã»÷£¬²»Ö´ĞĞ
+		// è¶…å‡ºç´¢å¼•å³æœ€ä¸‹é¢çš„loadmoreviewè¢«ç‚¹å‡»ï¼Œä¸æ‰§è¡Œ
 		if (position >= mAdapter.getCount()) {
 			return;
 		}
 		if (mActionMode != null) {
 			mAdapter.toggleSelected(position);
-			mActionMode.setTitle("ÒÑÑ¡Ôñ" + mAdapter.getSelectedCnt() + "Ìû");
+			mActionMode.setTitle("å·²é€‰æ‹©" + mAdapter.getSelectedCnt() + "å¸–");
 			if (mAdapter.getSelectedCnt() > 1) {
 				mActionMode.getMenu().findItem(R.id.menu_profile)
 						.setVisible(false);
@@ -272,24 +270,24 @@ public class ContentFragment extends SherlockListFragment implements
 
 	@Override
 	public void onScrollStateChanged(AbsListView view, int scrollState) {
-		int itemsLastIndex = mAdapter.getCount() - 1; // Êı¾İ¼¯×îºóÒ»ÏîµÄË÷Òı
-		int lastIndex = itemsLastIndex + 1; // ¼ÓÉÏµ×²¿µÄloadMoreViewÏî
+		int itemsLastIndex = mAdapter.getCount() - 1; // æ•°æ®é›†æœ€åä¸€é¡¹çš„ç´¢å¼•
+		int lastIndex = itemsLastIndex + 1; // åŠ ä¸Šåº•éƒ¨çš„loadMoreViewé¡¹
 		if (scrollState == OnScrollListener.SCROLL_STATE_IDLE
 				&& visibleLastIndex == lastIndex) {
-			loadNextPageView.setText("ÕıÔÚ¼ÓÔØÏÂÒ»Ò³");
+			loadNextPageView.setText("æ­£åœ¨åŠ è½½ä¸‹ä¸€é¡µ");
 			fetchNextPage();
 		}
 	}
 
 	/*
-	 * ¡°»Ø¸´¡±²Ëµ¥Ïî£¬¹©×ÓÀàÖØĞ´
+	 * â€œå›å¤â€èœå•é¡¹ï¼Œä¾›å­ç±»é‡å†™
 	 */
 	public void reply() {
 
 	}
 
 	/*
-	 * »ñÈ¡Ò³ÃæÄÚÈİ
+	 * è·å–é¡µé¢å†…å®¹
 	 */
 	public void fetchContents() {
 		new FetchContentTask().execute();
@@ -308,18 +306,18 @@ public class ContentFragment extends SherlockListFragment implements
 	}
 
 	void showToast(String str) {
-		Toast.makeText(getSherlockActivity(), str, Toast.LENGTH_SHORT).show();
+		Toast.makeText(getActivity(), str, Toast.LENGTH_SHORT).show();
 	}
 
 	/*
-	 * »ñÈ¡µ±Ç°fragmentÀàĞÍ
+	 * è·å–å½“å‰fragmentç±»å‹
 	 */
 	public int getThisTag() {
 		return getArguments().getInt("tag");
 	}
 
 	/*
-	 * Éè¶¨¡°Ë¢ĞÂ¡±²Ëµ¥ÏîµÄactionview
+	 * è®¾å®šâ€œåˆ·æ–°â€èœå•é¡¹çš„actionview
 	 */
 	public void setRefreshActionViewState(boolean refreshing) {
 		MenuItem refreshItem = getRefreshItem();
@@ -333,7 +331,7 @@ public class ContentFragment extends SherlockListFragment implements
 	}
 
 	public MainActivity getThisActivity() {
-		return (MainActivity) getSherlockActivity();
+		return (MainActivity) getActivity();
 	}
 
 	public MenuItem getRefreshItem() {

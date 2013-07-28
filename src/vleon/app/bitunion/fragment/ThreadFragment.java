@@ -2,16 +2,10 @@ package vleon.app.bitunion.fragment;
 
 import java.util.ArrayList;
 
-import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
-
-import com.actionbarsherlock.view.Menu;
-
 import vleon.app.bitunion.MainActivity;
 import vleon.app.bitunion.MainAdapter;
 import vleon.app.bitunion.R;
 import vleon.app.bitunion.api.BuAPI.Result;
-import vleon.app.bitunion.api.BuContent;
-import vleon.app.bitunion.api.BuPost;
 import vleon.app.bitunion.api.BuThread;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -22,8 +16,8 @@ import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
 import android.widget.EditText;
+import android.widget.TextView;
 
 public class ThreadFragment extends ContentFragment {
 	// private ArrayList<BuThread> mData;
@@ -49,16 +43,16 @@ public class ThreadFragment extends ContentFragment {
 	public void onActivityCreated(Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
 		mThreads = new ArrayList<BuThread>();
-		mAdapter = new ThreadsAdapter(getSherlockActivity(), mThreads);
+		mAdapter = new ThreadsAdapter(getActivity(), mThreads);
 		setListAdapter(mAdapter);
 		fetchContents();
 	}
 
 	@Override
 	public void reply() {
-		final View view = LayoutInflater.from(getSherlockActivity()).inflate(
+		final View view = LayoutInflater.from(getActivity()).inflate(
 				R.layout.newthread_dialog, null);
-		new AlertDialog.Builder(getSherlockActivity()).setView(view)
+		new AlertDialog.Builder(getActivity()).setView(view)
 				.setTitle("发表新帖")
 				.setNegativeButton("取消", new DialogInterface.OnClickListener() {
 

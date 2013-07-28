@@ -21,6 +21,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.Html;
 import android.view.LayoutInflater;
+import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
@@ -28,7 +29,6 @@ import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import com.actionbarsherlock.view.Menu;
 
 public class PostFragment extends ContentFragment {
 	HashMap<String, SoftReference<Drawable>> mDrawableCache;
@@ -54,12 +54,12 @@ public class PostFragment extends ContentFragment {
 	@Override
 	public void onActivityCreated(Bundle savedInstanceState) {
 		super.onActivityCreated(savedInstanceState);
-		titleView = (TextView) getSherlockActivity().findViewById(
+		titleView = (TextView) getActivity().findViewById(
 				R.id.titleView);
 		titleView.setText(getArguments().getString("subject"));
 		mDrawableCache = new HashMap<String, SoftReference<Drawable>>();
 		mPosts = new ArrayList<BuPost>();
-		mAdapter = new PostsAdapter(getSherlockActivity(), mPosts);
+		mAdapter = new PostsAdapter(getActivity(), mPosts);
 		setListAdapter(mAdapter);
 		fetchContents();
 	}
@@ -90,13 +90,13 @@ public class PostFragment extends ContentFragment {
 	}
 
 	public void showReplyDialog(String content) {
-		View view = LayoutInflater.from(getSherlockActivity()).inflate(
+		View view = LayoutInflater.from(getActivity()).inflate(
 				R.layout.reply_dialog, null);
 		final EditText contentText = (EditText) view
 				.findViewById(R.id.replyText);
 		contentText.setText(content);
 		contentText.setSelection(content.length()); // 定位光标到文本框末尾
-		new AlertDialog.Builder(getSherlockActivity()).setView(view)
+		new AlertDialog.Builder(getActivity()).setView(view)
 				.setTitle(getArguments().getString("subject"))
 				.setNegativeButton("取消", new OnClickListener() {
 

@@ -1,17 +1,5 @@
 package vleon.app.bitunion;
 
-import java.util.ArrayList;
-
-import vleon.app.bitunion.api.BuAPI;
-import vleon.app.bitunion.api.BuAPI.Result;
-import vleon.app.bitunion.api.BuForum;
-import vleon.app.bitunion.api.BuThread;
-import vleon.app.bitunion.fragment.ContentFragment.OnContentItemClickListener;
-import vleon.app.bitunion.fragment.MenuFragment;
-import vleon.app.bitunion.fragment.MenuFragment.OnForumSelectedListener;
-import vleon.app.bitunion.fragment.ContentFragment;
-import vleon.app.bitunion.fragment.PostFragment;
-import vleon.app.bitunion.fragment.ThreadFragment;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -22,12 +10,25 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentManager.BackStackEntry;
 import android.support.v4.app.FragmentTransaction;
 import android.view.KeyEvent;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.Toast;
 
-import com.actionbarsherlock.view.Menu;
-import com.actionbarsherlock.view.MenuItem;
-import com.slidingmenu.lib.SlidingMenu;
-import com.slidingmenu.lib.app.SlidingFragmentActivity;
+import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu;
+import com.jeremyfeinstein.slidingmenu.lib.app.SlidingFragmentActivity;
+
+import java.util.ArrayList;
+
+import vleon.app.bitunion.api.BuAPI;
+import vleon.app.bitunion.api.BuAPI.Result;
+import vleon.app.bitunion.api.BuForum;
+import vleon.app.bitunion.api.BuThread;
+import vleon.app.bitunion.fragment.ContentFragment;
+import vleon.app.bitunion.fragment.ContentFragment.OnContentItemClickListener;
+import vleon.app.bitunion.fragment.MenuFragment;
+import vleon.app.bitunion.fragment.MenuFragment.OnForumSelectedListener;
+import vleon.app.bitunion.fragment.PostFragment;
+import vleon.app.bitunion.fragment.ThreadFragment;
 
 public class MainActivity extends SlidingFragmentActivity implements
 		OnForumSelectedListener, OnContentItemClickListener {
@@ -58,7 +59,8 @@ public class MainActivity extends SlidingFragmentActivity implements
 		sm.setFadeDegree(0.35f);
 		sm.setTouchModeAbove(SlidingMenu.TOUCHMODE_FULLSCREEN);
 		sm.setBehindWidth(280);
-		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+//		getSupportActionBar().setDisplayHomeAsUpEnabled(true);              6.21
+        getActionBar().setDisplayHomeAsUpEnabled(true);
 		setSlidingActionBarEnabled(true);
 		// sm.setMode(SlidingMenu.LEFT_RIGHT);
 		// sm.setSecondaryMenu(R.layout.menu_frame_right);
@@ -141,24 +143,24 @@ public class MainActivity extends SlidingFragmentActivity implements
 			new AlertDialog.Builder(this).setMessage("项目地址: https://github.com/finalion/bitunion \n\n开发者: vleon, somebody ").setTitle("关于").show();
 			break;
 		}
-		return super.onOptionsItemSelected(item);
-	}
-
-	@Override
-	public boolean onPrepareOptionsMenu(Menu menu) {
-		mRefreshItem = menu.findItem(R.id.menu_refresh);
-		MenuItem switchItem = menu.findItem(R.id.menu_switchnet);
-		if (api.getNetType() == BuAPI.BITNET) {
-			switchItem.setTitle("切换网络至外网");
-		} else if (api.getNetType() == BuAPI.OUTNET) {
-			switchItem.setTitle("切换网络至内网");
-		}
 		return true;
 	}
 
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        mRefreshItem = menu.findItem(R.id.menu_refresh);
+        MenuItem switchItem = menu.findItem(R.id.menu_switchnet);
+        if (api.getNetType() == BuAPI.BITNET) {
+            switchItem.setTitle("切换网络至外网");
+        } else if (api.getNetType() == BuAPI.OUTNET) {
+            switchItem.setTitle("切换网络至内网");
+        }
+        return true;
+    }
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-		getSupportMenuInflater().inflate(R.menu.main, menu);
+//        getSupportMenuInflater().inflate(R.menu.main, menu); 6.21
+        getMenuInflater().inflate(R.menu.main, menu);
 		return true;
 	}
 

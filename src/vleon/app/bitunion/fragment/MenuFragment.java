@@ -7,6 +7,7 @@ import vleon.app.bitunion.api.BuForum;
 import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
+import android.support.v4.app.ListFragment;
 import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -15,9 +16,7 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import com.actionbarsherlock.app.SherlockListFragment;
-
-public class MenuFragment extends SherlockListFragment {
+public class MenuFragment extends ListFragment {
 
 	ArrayList<BuForum> mForumList = null;
 	OnForumSelectedListener mListener;
@@ -35,15 +34,15 @@ public class MenuFragment extends SherlockListFragment {
 			mCurrentPos = savedInstanceState.getInt("pos", 0);
 		}
 		mForumList = new ArrayList<BuForum>();
-		String[] forumNames = getSherlockActivity().getResources().getStringArray(R.array.forums);
-		int[] forumFids =  getSherlockActivity().getResources().getIntArray(R.array.fids);
+		String[] forumNames = getActivity().getResources().getStringArray(R.array.forums);
+		int[] forumFids =  getActivity().getResources().getIntArray(R.array.fids);
 		int[] forumTypes =  getActivity().getResources().getIntArray(R.array.types);
 		for (int i = 0; i < forumFids.length; i++) {
 			mForumList.add(new BuForum(forumNames[i], forumFids[i],
 					forumTypes[i]));
 		}
 		
-		mAdapter = new MenuAdapter(getSherlockActivity());
+		mAdapter = new MenuAdapter(getActivity());
 		ArrayList<Integer> typesAdded = new ArrayList<Integer>();
 		SparseArray<String> types = new SparseArray<String>();
 		types.put(0, "系统管理区");
