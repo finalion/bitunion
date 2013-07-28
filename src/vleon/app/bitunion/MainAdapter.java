@@ -2,9 +2,6 @@ package vleon.app.bitunion;
 
 import java.util.ArrayList;
 
-import vleon.app.bitunion.api.BuContent;
-import vleon.app.bitunion.api.BuThread;
-
 import android.content.Context;
 import android.view.View;
 import android.view.ViewGroup;

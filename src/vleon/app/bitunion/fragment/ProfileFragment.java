@@ -14,9 +14,7 @@ import android.view.ViewGroup;
 import android.widget.QuickContactBadge;
 import android.widget.TextView;
 
-import com.actionbarsherlock.app.SherlockDialogFragment;
-
-public class ProfileFragment extends SherlockDialogFragment {
+public class ProfileFragment extends DialogFragment {
 	String uid, username;
 
 	public static ProfileFragment newInstance(String uid, String username) {

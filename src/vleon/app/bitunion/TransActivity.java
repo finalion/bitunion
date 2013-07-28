@@ -1,13 +1,12 @@
 package vleon.app.bitunion;
 
 import vleon.app.bitunion.api.BuAPI;
+import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 
-import com.actionbarsherlock.app.SherlockActivity;
-
-public class TransActivity extends SherlockActivity {
+public class TransActivity extends Activity {
 
 	String mUsername, mPassword;
 	int mNetType;

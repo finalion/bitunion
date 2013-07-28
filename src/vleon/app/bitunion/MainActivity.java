@@ -1,22 +1,5 @@
 package vleon.app.bitunion;
 
-import android.app.AlertDialog;
-import android.content.Intent;
-import android.content.SharedPreferences;
-import android.os.AsyncTask;
-import android.os.Bundle;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentManager.BackStackEntry;
-import android.support.v4.app.FragmentTransaction;
-import android.view.KeyEvent;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.widget.Toast;
-
-import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu;
-import com.jeremyfeinstein.slidingmenu.lib.app.SlidingFragmentActivity;
-
 import java.util.ArrayList;
 
 import vleon.app.bitunion.api.BuAPI;
@@ -29,6 +12,33 @@ import vleon.app.bitunion.fragment.MenuFragment;
 import vleon.app.bitunion.fragment.MenuFragment.OnForumSelectedListener;
 import vleon.app.bitunion.fragment.PostFragment;
 import vleon.app.bitunion.fragment.ThreadFragment;
+import android.app.AlertDialog;
+import android.support.v4.app.ActionBarDrawerToggle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentManager.BackStackEntry;
+import android.support.v4.app.FragmentTransaction;
+import android.support.v4.widget.DrawerLayout;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.util.SparseArray;
+import android.view.KeyEvent;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.jeremyfeinstein.slidingmenu.lib.SlidingMenu;
+import com.jeremyfeinstein.slidingmenu.lib.app.SlidingFragmentActivity;
 
 public class MainActivity extends SlidingFragmentActivity implements
 		OnForumSelectedListener, OnContentItemClickListener {
@@ -45,34 +55,83 @@ public class MainActivity extends SlidingFragmentActivity implements
 	boolean mAutoLogin;
 	int mNetType;
 
-	public void setSideMenu() {
-		// set the Behind View
-		setBehindContentView(R.layout.menu_frame);
-		getSupportFragmentManager().beginTransaction()
-				.replace(R.id.menu_frame, new MenuFragment()).commit();
+	DrawerLayout mDrawerLayout;
+	ListView mDrawerList;
+	ActionBarDrawerToggle mDrawerToggle;
+	LeftDrawerAdapter mAdapter;
 
-		SlidingMenu sm = getSlidingMenu();
+	 public void setSideMenu() {
+	 // set the Behind View
+	 setBehindContentView(R.layout.menu_frame);
+	 getSupportFragmentManager().beginTransaction()
+	 .replace(R.id.menu_frame, new MenuFragment()).commit();
+	
+	 SlidingMenu sm = getSlidingMenu();
+	 sm.setShadowWidthRes(R.dimen.shadow_width);
+	 sm.setShadowDrawable(R.drawable.shadow);
+	 sm.setBehindOffsetRes(R.dimen.slidingmenu_offset);
+	 sm.setFadeDegree(0.35f);
+	 sm.setTouchModeAbove(SlidingMenu.TOUCHMODE_FULLSCREEN);
+	 sm.setBehindWidth(280);
+	 // getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+	
+	 setSlidingActionBarEnabled(true);
+	 sm.setMode(SlidingMenu.RIGHT);
+	
+	 }
 
-		sm.setShadowWidthRes(R.dimen.shadow_width);
-		sm.setShadowDrawable(R.drawable.shadow);
-		sm.setBehindOffsetRes(R.dimen.slidingmenu_offset);
-		sm.setFadeDegree(0.35f);
-		sm.setTouchModeAbove(SlidingMenu.TOUCHMODE_FULLSCREEN);
-		sm.setBehindWidth(280);
-//		getSupportActionBar().setDisplayHomeAsUpEnabled(true);              6.21
-        getActionBar().setDisplayHomeAsUpEnabled(true);
-		setSlidingActionBarEnabled(true);
-		// sm.setMode(SlidingMenu.LEFT_RIGHT);
-		// sm.setSecondaryMenu(R.layout.menu_frame_right);
-		// getSupportFragmentManager().beginTransaction()
-		// .replace(R.id.menu_frame_right, new RightMenuFragment()).commit();
+	public void setLeftDrawer() {
+		mDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout,
+				R.drawable.ic_drawer, R.string.drawer_open,
+				R.string.drawer_close) {
+
+			/** Called when a drawer has settled in a completely closed state. */
+			public void onDrawerClosed(View view) {
+//				getActionBar().setTitle(mTitle);
+			}
+
+			/** Called when a drawer has settled in a completely open state. */
+			public void onDrawerOpened(View drawerView) {
+//				getActionBar().setTitle(mDrawerTitle);
+			}
+		};
+		mDrawerLayout.setDrawerListener(mDrawerToggle);
+		String[] forumNames = getResources().getStringArray(R.array.forums);
+		int[] forumFids = getResources().getIntArray(R.array.fids);
+		int[] forumTypes = getResources().getIntArray(R.array.types);
+		for (int i = 0; i < forumFids.length; i++) {
+			mForumList.add(new BuForum(forumNames[i], forumFids[i],
+					forumTypes[i]));
+		}
+		ArrayList<Integer> typesAdded = new ArrayList<Integer>();
+		SparseArray<String> types = new SparseArray<String>();
+		types.put(0, "系统管理区");
+		types.put(1, "直通理工区");
+		types.put(3, "苦中作乐区");
+		types.put(2, "技术讨论区");
+		for (BuForum forum : mForumList) {
+			if (!typesAdded.contains(forum.getType())) {
+				typesAdded.add(forum.getType());
+				mAdapter.add(types.get(forum.getType()));
+			}
+			mAdapter.add(forum);
+		}
+		mDrawerList.setAdapter(mAdapter);
+		
 	}
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
-		setSideMenu();
+		mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+		mDrawerList = (ListView) findViewById(R.id.left_drawer);
+		mAdapter = new LeftDrawerAdapter(this);
+		getActionBar().setDisplayHomeAsUpEnabled(true);
+		getActionBar().setHomeButtonEnabled(true);
+		setLeftDrawer();
+		 setSideMenu();
+
 		Intent intent = getIntent();
 		mUsername = intent.getStringExtra("username");
 		mPassword = intent.getStringExtra("password");
@@ -81,7 +140,12 @@ public class MainActivity extends SlidingFragmentActivity implements
 		api = new BuAPI(mUsername, mPassword, mNetType);
 		new LoginTask().execute();
 	}
-
+    @Override
+	public void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        // Sync the toggle state after onRestoreInstanceState has occurred.
+        mDrawerToggle.syncState();   //必须有这个，否则ActionBarDrawerTogger不能改变图标
+    }
 	@Override
 	protected void onPause() {
 		super.onPause();
@@ -119,7 +183,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 		case android.R.id.home:
 			Fragment fragment = mFragManager.findFragmentByTag("post");
 			if (fragment == null) {
-				toggle();
+				 toggle();
 			} else {
 				onBackPressed();
 			}
@@ -140,27 +204,31 @@ public class MainActivity extends SlidingFragmentActivity implements
 			finish();
 			break;
 		case R.id.menu_about:
-			new AlertDialog.Builder(this).setMessage("项目地址: https://github.com/finalion/bitunion \n\n开发者: vleon, somebody ").setTitle("关于").show();
+			new AlertDialog.Builder(this)
+					.setMessage(
+							"项目地址: https://github.com/finalion/bitunion \n\n开发者: vleon, somebody ")
+					.setTitle("关于").show();
 			break;
 		}
 		return true;
 	}
 
-    @Override
-    public boolean onPrepareOptionsMenu(Menu menu) {
-        mRefreshItem = menu.findItem(R.id.menu_refresh);
-        MenuItem switchItem = menu.findItem(R.id.menu_switchnet);
-        if (api.getNetType() == BuAPI.BITNET) {
-            switchItem.setTitle("切换网络至外网");
-        } else if (api.getNetType() == BuAPI.OUTNET) {
-            switchItem.setTitle("切换网络至内网");
-        }
-        return true;
-    }
+	@Override
+	public boolean onPrepareOptionsMenu(Menu menu) {
+		mRefreshItem = menu.findItem(R.id.menu_refresh);
+		MenuItem switchItem = menu.findItem(R.id.menu_switchnet);
+		if (api.getNetType() == BuAPI.BITNET) {
+			switchItem.setTitle("切换网络至外网");
+		} else if (api.getNetType() == BuAPI.OUTNET) {
+			switchItem.setTitle("切换网络至内网");
+		}
+		return true;
+	}
+
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-//        getSupportMenuInflater().inflate(R.menu.main, menu); 6.21
-        getMenuInflater().inflate(R.menu.main, menu);
+		// getSupportMenuInflater().inflate(R.menu.main, menu); 6.21
+		getMenuInflater().inflate(R.menu.main, menu);
 		return true;
 	}
 
@@ -193,7 +261,7 @@ public class MainActivity extends SlidingFragmentActivity implements
 
 	@Override
 	public void onForumSelected(int fid, String name) {
-		getSlidingMenu().showContent();
+		// getSlidingMenu().showContent();
 		showForum(fid, name);
 	}
 
@@ -264,5 +332,53 @@ public class MainActivity extends SlidingFragmentActivity implements
 
 	public MenuItem getRefreshItem() {
 		return mRefreshItem;
+	}
+
+	public class LeftDrawerAdapter extends ArrayAdapter<Object> {
+
+		Context mContext;
+
+		public LeftDrawerAdapter(Context context) {
+			super(context, 0);
+			mContext = context;
+		}
+
+		/*
+		 * 屏蔽标题栏的点击事件
+		 */
+		@Override
+		public boolean areAllItemsEnabled() {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		@Override
+		public boolean isEnabled(int position) {
+			// TODO Auto-generated method stub
+			return getItem(position) instanceof BuForum;
+		}
+
+		public View getView(int position, View convertView, ViewGroup parent) {
+			if (convertView == null) {
+				convertView = LayoutInflater.from(getContext()).inflate(
+						R.layout.menu_row, null);
+			}
+			TextView title = (TextView) convertView
+					.findViewById(R.id.row_title);
+			TextView categroy = (TextView) convertView
+					.findViewById(R.id.category_title);
+			Object item = getItem(position);
+			if (item instanceof String) {
+				title.setVisibility(View.GONE);
+				categroy.setVisibility(View.VISIBLE);
+				categroy.setText((String) item);
+
+			} else {
+				title.setVisibility(View.VISIBLE);
+				categroy.setVisibility(View.GONE);
+				title.setText(((BuForum) item).getName());
+			}
+			return convertView;
+		}
 	}
 }

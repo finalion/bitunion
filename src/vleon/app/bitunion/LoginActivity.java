@@ -2,6 +2,7 @@ package vleon.app.bitunion;
 
 import vleon.app.bitunion.api.BuAPI;
 import vleon.app.bitunion.api.BuAPI.Result;
+import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
@@ -14,9 +15,7 @@ import android.widget.EditText;
 import android.widget.RadioGroup;
 import android.widget.RadioGroup.OnCheckedChangeListener;
 
-import com.actionbarsherlock.app.SherlockActivity;
-
-public class LoginActivity extends SherlockActivity {
+public class LoginActivity extends Activity {
 	public static BuAPI api;
 	EditText usernameText, passwordText;
 	Button loginButton, registerButton, forgetPassButton;
@@ -31,18 +30,6 @@ public class LoginActivity extends SherlockActivity {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-//		readConfig();
-//		// 如果读取保存的账户信息成功
-//		if (mUsername != null && mPassword != null) {
-//			// 如果打开了自动登录功能，则用保存的账号登录，直接跳转到主界面
-//			if (mAutoLogin) {
-//				api = new BuAPI(mUsername, mPassword);
-//				api.setNetType(mNetType);
-//				new LoginTask().execute();
-//				return;
-//			}
-//		}
-		// 显示登录界面
 		setContentView(R.layout.activity_login);
 		usernameText = (EditText) findViewById(R.id.usernameText);
 		passwordText = (EditText) findViewById(R.id.passwordText);
@@ -126,14 +113,4 @@ public class LoginActivity extends SherlockActivity {
 		editor.putBoolean("autologin", mAutoLogin);
 		editor.commit();
 	}
-
-	public void readConfig() {
-		SharedPreferences config = getSharedPreferences("config", MODE_PRIVATE);
-		mNetType = config.getInt("nettype", BuAPI.BITNET);
-		mStartFid = config.getInt("startfid", 14);
-		mUsername = config.getString("username", null);
-		mPassword = config.getString("password", null);
-		mAutoLogin = config.getBoolean("autologin", false);
-	}
-
 }

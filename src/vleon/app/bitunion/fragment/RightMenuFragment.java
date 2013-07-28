@@ -2,13 +2,12 @@ package vleon.app.bitunion.fragment;
 
 import vleon.app.bitunion.R;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.actionbarsherlock.app.SherlockFragment;
-
-public class RightMenuFragment extends SherlockFragment {
+public class RightMenuFragment extends Fragment {
 
 	int mCurrentPos = 0;
 

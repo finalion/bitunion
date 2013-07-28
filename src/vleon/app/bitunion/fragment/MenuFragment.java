@@ -20,7 +20,7 @@ public class MenuFragment extends ListFragment {
 
 	ArrayList<BuForum> mForumList = null;
 	OnForumSelectedListener mListener;
-	MenuAdapter mAdapter;
+	public static MenuAdapter mAdapter;
 	int mCurrentPos = 0;
 
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
